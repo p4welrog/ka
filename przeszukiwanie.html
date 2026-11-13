@@ -21,16 +21,28 @@
   .cel-mini div, .mini div { display: grid; place-items: center; font-weight: 700; border-radius: 2px; }
   .cel-mini div { height: 26px; font-size: 0.85rem; background: #dcebdc; border: 1px solid var(--zielony); }
   .cel-mini div.pusty, .mini div.pusty { background: #fff; border: 1px solid var(--linia); }
-  .drzewo { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
-  .dzieci { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
-  .wezel { border: 1.5px solid var(--linia); border-radius: 6px; padding: 0.45rem; text-align: center; background: #fff; }
+  .drzewo-okno { overflow-x: auto; padding-bottom: 0.3rem; }
+  .drzewo { display: flex; flex-direction: column; align-items: center; min-width: max-content; margin: 0 auto; }
+  .drzewo .pien { width: 2px; height: 16px; background: #9aa0a8; }
+  .dzieci { display: flex; justify-content: center; }
+  .galaz { position: relative; padding: 16px 0.35rem 0; display: flex; justify-content: center; }
+  .galaz::before, .galaz::after { content: ""; position: absolute; top: 0; width: 50%; height: 16px; border-top: 2px solid #9aa0a8; }
+  .galaz::before { right: 50%; } .galaz::after { left: 50%; border-left: 2px solid #9aa0a8; }
+  .galaz:first-child::before, .galaz:last-child::after { border-top: 0; }
+  .galaz:last-child::before { border-right: 2px solid #9aa0a8; border-top-right-radius: 6px; }
+  .galaz:first-child::after { border-top-left-radius: 6px; }
+  .galaz:only-child::before { display: none; } .galaz:only-child::after { border-top: 0; border-radius: 0; }
+  .wezel { border: 1.5px solid var(--linia); border-radius: 6px; padding: 0.45rem; text-align: center; background: #fff; font: inherit; color: inherit; }
+  button.wezel { cursor: pointer; } button.wezel:hover { background: var(--granat-jasny); }
   .wezel.najlepszy { border-color: var(--akcent); background: var(--akcent-jasny); }
+  .wezel.sciezka { border-color: var(--zielony); box-shadow: 0 0 0 2px var(--zielony); }
+  .wezel.powrot { opacity: 0.45; }
   .wezel.korzen { border-color: var(--granat); }
+  .wezel .etykieta { display: block; font-size: 0.68rem; font-weight: 700; margin-top: 0.15rem; }
   .mini { display: grid; grid-template-columns: repeat(3, 20px); gap: 2px; margin: 0 auto 0.3rem; }
   .mini div { height: 20px; font-size: 0.7rem; background: #d6e1ec; border: 1px solid var(--granat); }
   .mini div.ruszony { background: #f0b4bd; border-color: var(--akcent); }
   .wezel .fgh { font-family: var(--mono); font-size: 0.78rem; line-height: 1.35; }
-  .strzalki { color: var(--szary); font-size: 1.2rem; }
   .sterowanie { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin: 0.6rem 0; }
   .sterowanie button { min-width: 2.6rem; }
   .sterowanie select { font: inherit; font-size: 0.9rem; padding: 0.35rem; border-radius: 4px; border: 1.5px solid var(--linia); }
@@ -42,6 +54,13 @@
   .pasek-wyn { height: 0.9rem; background: var(--granat); border-radius: 2px; min-width: 2px; }
   td.liczba { font-family: var(--mono); text-align: right; }
   .kalk select { font: inherit; padding: 0.3rem; border-radius: 4px; border: 1.5px solid var(--linia); max-width: 100%; }
+  @media (max-width: 560px) {
+    .mini { grid-template-columns: repeat(3, 15px); gap: 1px; }
+    .mini div { height: 15px; font-size: 0.6rem; }
+    .wezel { padding: 0.3rem; }
+    .wezel .fgh { font-size: 0.62rem; }
+    .galaz { padding-left: 0.15rem; padding-right: 0.15rem; }
+  }
 </style>
 </head>
 <body>
@@ -106,8 +125,8 @@
     <li><strong>g</strong> — ile ruchów już wykonano od startu,</li>
     <li><strong>h</strong> — ile ruchów jeszcze (co najmniej) zostało, według heurystyki.</li>
   </ul>
-  <p>A* zawsze rozwija najpierw stan o <strong>najmniejszym f</strong>. Poniżej sąsiedzi stanu z kroku 1 — przesuwaj klocki, a drzewo się zmieni.</p>
-  <div class="panel"><div class="drzewo" id="drzewo"></div></div>
+  <p>A* zawsze rozwija najpierw stan o <strong>najmniejszym f</strong>. Poniżej stan z kroku 1 i jego sąsiedzi. <strong>Kliknij sąsiada</strong>, żeby wykonać ten ruch — plansza w kroku 1 i drzewo zmienią się razem. Spróbuj ułożyć przesuwankę, wybierając zawsze stan o najmniejszym f.</p>
+  <div class="panel"><div class="drzewo-okno"><div class="drzewo" id="drzewo"></div></div><p class="maly" id="drzewoOpis" style="text-align:center;margin:0.4rem 0 0"></p></div>
 </section>
 
 <!-- ============================================================ -->
@@ -130,7 +149,7 @@
     <div id="odtwarzacz" hidden>
       <h3>Rozwiązanie A* krok po kroku</h3>
       <div class="gra">
-        <div class="plansza gotowa" id="plansza2" aria-label="Plansza z rozwiązaniem A*"></div>
+        <div class="plansza" id="plansza2" aria-label="Plansza z rozwiązaniem A*"></div>
         <div style="flex:1;min-width:240px">
           <div class="opis-kroku" id="opisKroku" aria-live="polite"></div>
           <div class="liczniki" style="margin:0">
@@ -152,6 +171,9 @@
         </select>
       </div>
       <div class="suwak"><label for="pSuwak">krok</label><input id="pSuwak" type="range" min="0" max="1" step="1" value="0"><output id="pSuwakO">0</output></div>
+      <h3 style="font-size:1rem">Co A* widzi w tym kroku</h3>
+      <div class="drzewo-okno"><div class="drzewo" id="drzewo2"></div></div>
+      <p class="maly" id="drzewo2Opis" style="text-align:center;margin:0.4rem 0 1rem"></p>
       <canvas id="wykresH" width="860" height="190" aria-label="Heurystyka h i prawdziwa liczba pozostałych ruchów wzdłuż rozwiązania"></canvas>
       <div class="legenda-h"><span style="--k:#b5162b">h — heurystyka Manhattan</span><span class="przer" style="--k:#1f4e79">ile ruchów zostało naprawdę</span></div>
       <p class="maly" id="wniosekH"></p>
@@ -289,7 +311,7 @@ function rysuj() {
 function przesun(v) {
   const i = stan.indexOf(v), p = stan.indexOf(0);
   if (!RUCHY[p].includes(i)) return;
-  stan[p] = v; stan[i] = 0; ruchy++; wynikiNieaktualne(); rysuj();
+  poprzedni = stan.slice(); stan[p] = v; stan[i] = 0; ruchy++; wynikiNieaktualne(); rysuj();
 }
 function wymieszaj(n) {
   let s = CEL.slice(), poprz = -1;
@@ -298,20 +320,35 @@ function wymieszaj(n) {
     s[p] = s[q]; s[q] = 0; poprz = p;
   }
   if (jestCel(s)) return wymieszaj(n);
-  stan = s; ruchy = 0; wynikiNieaktualne(); rysuj();
+  stan = s; ruchy = 0; poprzedni = null; wynikiNieaktualne(); rysuj();
 }
 document.querySelectorAll("[data-mix]").forEach(b => b.onclick = () => wymieszaj(+b.dataset.mix));
 
 // ================= KROK 2: drzewo =================
 function mini(s, ruszony) { return `<div class="mini">${s.map(v => `<div class="${v ? (v === ruszony ? "ruszony" : "") : "pusty"}">${v || ""}</div>`).join("")}</div>`; }
+// el — kontener, s — stan, g — liczba ruchów od startu, opcje: poprz (stan, z którego przyszliśmy),
+// nast (następny stan na ścieżce rozwiązania), klik (funkcja wywoływana z numerem przesuwanego klocka)
+function drzewo(el, s, g, { poprz = null, nast = null, klik = null } = {}) {
+  const kp = poprz && klucz(poprz), kn = nast && klucz(nast);
+  const dz = sasiedzi(s).map(t => ({ t, h: manhattan(t), ruszony: s[t.indexOf(0)], powrot: klucz(t) === kp, nast: klucz(t) === kn }));
+  const kandydaci = dz.filter(d => !d.powrot), minF = Math.min(...kandydaci.map(d => g + 1 + d.h));
+  const tag = klik ? "button" : "div";
+  el.innerHTML = `<div class="wezel korzen">${mini(s)}<div class="fgh">g = ${g}, h = ${manhattan(s)}<br>f = ${g + manhattan(s)}</div></div>
+    <div class="pien"></div>
+    <div class="dzieci">${dz.map(d => {
+      const f = g + 1 + d.h, kl = ["wezel", !d.powrot && f === minF ? "najlepszy" : "", d.nast ? "sciezka" : "", d.powrot ? "powrot" : ""].join(" ");
+      const et = d.powrot ? "powrót" : d.nast ? `<span style="color:var(--zielony)">ruch A*</span>` : "";
+      return `<div class="galaz"><${tag} class="${kl}" ${klik ? `data-v="${d.ruszony}" aria-label="przesuń klocek ${d.ruszony}, f = ${f}"` : ""}>${mini(d.t, d.ruszony)}<div class="fgh">ruch: ${d.ruszony}<br>g = ${g + 1}, h = ${d.h}<br><b>f = ${f}</b></div>${et ? `<span class="etykieta">${et}</span>` : ""}</${tag}></div>`;
+    }).join("")}</div>`;
+  if (klik) el.querySelectorAll("button.wezel").forEach(b => b.onclick = () => klik(+b.dataset.v));
+  return { dz, minF };
+}
+let poprzedni = null;
 function rysujDrzewo() {
-  const dz = sasiedzi(stan).map(t => ({ t, h: manhattan(t), ruszony: stan[t.indexOf(0)] }));
-  const minF = Math.min(...dz.map(d => 1 + d.h));
-  document.getElementById("drzewo").innerHTML =
-    `<div class="wezel korzen">${mini(stan)}<div class="fgh">g = 0, h = ${manhattan(stan)}</div></div>
-     <div class="strzalki">${dz.map(() => "↓").join(" &nbsp; &nbsp; ")}</div>
-     <div class="dzieci">${dz.map(d => `<div class="wezel ${1 + d.h === minF ? "najlepszy" : ""}">${mini(d.t, d.ruszony)}<div class="fgh">ruch: ${d.ruszony}<br>g = 1, h = ${d.h}<br><b>f = ${1 + d.h}</b></div></div>`).join("")}</div>
-     <p class="maly" style="text-align:center;margin:0.3rem 0 0">Na czerwono — stan, który A* rozwinie najpierw (najmniejsze f).${jestCel(stan) ? " Plansza jest ułożona — wymieszaj ją w kroku 1." : ""}</p>`;
+  drzewo(document.getElementById("drzewo"), stan, ruchy, { poprz: poprzedni, klik: przesun });
+  document.getElementById("drzewoOpis").innerHTML = jestCel(stan)
+    ? (ruchy ? `Ułożone w ${ruchy} ruchach. ` : "") + "Wymieszaj planszę w kroku 1, żeby zacząć od nowa."
+    : "Czerwone — najmniejsze f. Wyszarzony — powrót do stanu, z którego właśnie przyszliśmy (A* go nie powtarza). g liczymy od wymieszania.";
 }
 
 // ================= KROK 3: algorytmy =================
@@ -352,6 +389,7 @@ function pokazOdtwarzacz(s) {
     ? `W ${wzrosty} z ${n} kroków h rośnie: najkrótsza droga czasem chwilowo „oddala się” od celu. Algorytm zachłanny, który patrzy tylko na h, zawsze wybiera ruch najlepiej wyglądający w tej chwili — dlatego błądzi, a jego rozwiązania są dłuższe. Czerwona linia nigdy nie jest nad niebieską: heurystyka Manhattan nigdy nie przeszacowuje.`
     : `Tym razem h maleje w każdym kroku. Wymieszaj mocniej, a zobaczysz kroki, w których h rośnie. Czerwona linia nigdy nie jest nad niebieską: heurystyka Manhattan nigdy nie przeszacowuje.`;
   rysujP();
+  requestAnimationFrame(() => requestAnimationFrame(() => plansza2.classList.add("gotowa")));
 }
 function rysujP() {
   const s = sciezka[krokP], n = sciezka.length - 1;
@@ -366,6 +404,14 @@ function rysujP() {
   document.getElementById("gK").textContent = krokP;
   document.getElementById("hK").textContent = manhattan(s);
   document.getElementById("rK").textContent = n - krokP;
+  const d2 = document.getElementById("drzewo2"), o2 = document.getElementById("drzewo2Opis");
+  if (krokP < n) {
+    const { dz, minF } = drzewo(d2, s, krokP, { poprz: krokP ? sciezka[krokP - 1] : null, nast: sciezka[krokP + 1] });
+    const wyb = dz.find(d => d.nast), fw = krokP + 1 + wyb.h;
+    o2.innerHTML = fw === minF
+      ? "Zielona obwódka — ruch, który znalazł się w rozwiązaniu. Tu ma też najmniejsze f."
+      : `Zielona obwódka — ruch z rozwiązania (f = ${fw}). Stan w czerwieni ma mniejsze f (${minF}), więc A* sprawdził go wcześniej — ale ta droga okazała się dłuższa.`;
+  } else { d2.innerHTML = ""; o2.textContent = "Cel osiągnięty — nie ma już czego rozwijać."; }
   document.getElementById("pSuwak").value = krokP;
   document.getElementById("pSuwakO").textContent = krokP;
   document.getElementById("pWst").disabled = document.getElementById("pPocz").disabled = krokP === 0;

@@ -31,6 +31,14 @@
   .mini div.ruszony { background: #f0b4bd; border-color: var(--akcent); }
   .wezel .fgh { font-family: var(--mono); font-size: 0.78rem; line-height: 1.35; }
   .strzalki { color: var(--szary); font-size: 1.2rem; }
+  .sterowanie { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin: 0.6rem 0; }
+  .sterowanie button { min-width: 2.6rem; }
+  .sterowanie select { font: inherit; font-size: 0.9rem; padding: 0.35rem; border-radius: 4px; border: 1.5px solid var(--linia); }
+  .klocek.ruszany { background: #f6e3e6; border-color: var(--akcent); }
+  .opis-kroku { font-size: 1.05rem; min-height: 3.2em; margin: 0.3rem 0 0.5rem; }
+  .legenda-h { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--szary); }
+  .legenda-h span::before { content: ""; display: inline-block; width: 1.2em; height: 0; border-top: 3px solid var(--k); margin-right: 0.35em; vertical-align: 0.25em; }
+  .legenda-h span.przer::before { border-top-style: dashed; }
   .pasek-wyn { height: 0.9rem; background: var(--granat); border-radius: 2px; min-width: 2px; }
   td.liczba { font-family: var(--mono); text-align: right; }
   .kalk select { font: inherit; padding: 0.3rem; border-radius: 4px; border: 1.5px solid var(--linia); max-width: 100%; }
@@ -110,7 +118,6 @@
   <div class="panel">
     <div class="przyciski">
       <button class="glowny" id="uruchom">Uruchom wszystkie</button>
-      <button id="odtworz" disabled>Odtwórz rozwiązanie A* na planszy</button>
     </div>
     <div class="tabela-zawijana">
       <table>
@@ -119,6 +126,36 @@
       </table>
     </div>
     <p class="maly">Długość paska — liczba rozwiniętych stanów w skali logarytmicznej.</p>
+
+    <div id="odtwarzacz" hidden>
+      <h3>Rozwiązanie A* krok po kroku</h3>
+      <div class="gra">
+        <div class="plansza gotowa" id="plansza2" aria-label="Plansza z rozwiązaniem A*"></div>
+        <div style="flex:1;min-width:240px">
+          <div class="opis-kroku" id="opisKroku" aria-live="polite"></div>
+          <div class="liczniki" style="margin:0">
+            <div class="licznik">g — ruchy wykonane<b id="gK">0</b></div>
+            <div class="licznik">h — Manhattan<b id="hK">0</b></div>
+            <div class="licznik">zostało naprawdę<b id="rK">0</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="sterowanie">
+        <button id="pPocz" aria-label="Na początek">⏮</button>
+        <button id="pWst" aria-label="Krok wstecz">◀ krok</button>
+        <button class="glowny" id="pGraj">▶ Odtwórz</button>
+        <button id="pDal" aria-label="Krok naprzód">krok ▶</button>
+        <select id="pTempo" aria-label="Tempo odtwarzania">
+          <option value="1000">wolno</option>
+          <option value="550" selected>średnio</option>
+          <option value="220">szybko</option>
+        </select>
+      </div>
+      <div class="suwak"><label for="pSuwak">krok</label><input id="pSuwak" type="range" min="0" max="1" step="1" value="0"><output id="pSuwakO">0</output></div>
+      <canvas id="wykresH" width="860" height="190" aria-label="Heurystyka h i prawdziwa liczba pozostałych ruchów wzdłuż rozwiązania"></canvas>
+      <div class="legenda-h"><span style="--k:#b5162b">h — heurystyka Manhattan</span><span class="przer" style="--k:#1f4e79">ile ruchów zostało naprawdę</span></div>
+      <p class="maly" id="wniosekH"></p>
+    </div>
   </div>
 
   <details>
@@ -229,7 +266,7 @@ function najpierwNajlepszy(start, h, waga) {   // waga = 1: A*, waga = 0: zachł
 }
 
 // ================= KROK 1: plansza =================
-let stan = CEL.slice(), ruchy = 0, animacja = null;
+let stan = CEL.slice(), ruchy = 0;
 const plansza = document.getElementById("plansza"), klocki = {};
 const POZ = i => `translate(${(i % 3) * 74 + 4}px, ${Math.floor(i / 3) * 74 + 4}px)`;
 for (let v = 1; v <= 8; v++) {
@@ -250,13 +287,11 @@ function rysuj() {
   rysujDrzewo();
 }
 function przesun(v) {
-  if (animacja) return;
   const i = stan.indexOf(v), p = stan.indexOf(0);
   if (!RUCHY[p].includes(i)) return;
   stan[p] = v; stan[i] = 0; ruchy++; wynikiNieaktualne(); rysuj();
 }
 function wymieszaj(n) {
-  if (animacja) return;
   let s = CEL.slice(), poprz = -1;
   for (let t = 0; t < n; t++) {
     const p = s.indexOf(0), opcje = RUCHY[p].filter(q => q !== poprz), q = opcje[Math.floor(Math.random() * opcje.length)];
@@ -280,9 +315,9 @@ function rysujDrzewo() {
 }
 
 // ================= KROK 3: algorytmy =================
-let rozwA = null;
 function wynikiNieaktualne() {
-  rozwA = null; document.getElementById("odtworz").disabled = true;
+  if (typeof stopP === "function") stopP();
+  document.getElementById("odtwarzacz").hidden = true;
   document.getElementById("wyniki").innerHTML = '<tr><td colspan="5" class="maly">Ustawienie się zmieniło — kliknij „Uruchom wszystkie”.</td></tr>';
 }
 document.getElementById("uruchom").onclick = () => {
@@ -298,17 +333,74 @@ document.getElementById("uruchom").onclick = () => {
     const dl = w.sciezka.length - 1, szer = w.rozw ? Math.max(2, Math.log10(w.rozw + 1) / Math.log10(maxR + 1) * 100) : 2;
     return `<tr><td>${n}</td><td class="liczba">${w.rozw.toLocaleString("pl-PL")}</td><td style="min-width:7rem"><div class="pasek-wyn" style="width:${szer}%"></div></td><td class="liczba">${dl}</td><td>${dl === opt ? '<span style="color:var(--zielony);font-weight:700">tak</span>' : `<span style="color:var(--czerwony);font-weight:700">nie (+${dl - opt})</span>`}</td></tr>`;
   }).join("");
-  rozwA = wyn[3][1].sciezka; document.getElementById("odtworz").disabled = rozwA.length < 2;
+  pokazOdtwarzacz(wyn[3][1].sciezka.map(k => [...k].map(Number)));
 };
-document.getElementById("odtworz").onclick = () => {
-  if (!rozwA || animacja) return;
-  const kroki = rozwA.slice(1).map(k => [...k].map(Number)); let t = 0; ruchy = 0;
-  document.getElementById("odtworz").disabled = true;
-  animacja = setInterval(() => {
-    if (t >= kroki.length) { clearInterval(animacja); animacja = null; return; }
-    stan = kroki[t++]; ruchy++; rysuj();
-  }, 380);
-};
+
+// ---------- odtwarzacz rozwiązania A* ----------
+const plansza2 = document.getElementById("plansza2"), klocki2 = {};
+for (let v = 1; v <= 8; v++) { const d = document.createElement("div"); d.className = "klocek"; d.textContent = v; d.style.cursor = "default"; plansza2.appendChild(d); klocki2[v] = d; }
+let sciezka = [], krokP = 0, zegar = null;
+const pW = (() => { const c = document.getElementById("wykresH"), W = c.width, H = c.height, r = window.devicePixelRatio || 1; c.width = W * r; c.height = H * r; const ctx = c.getContext("2d"); ctx.scale(r, r); return { c, ctx, W, H }; })();
+const KIER = { "-3": "w górę", "3": "w dół", "-1": "w lewo", "1": "w prawo" };
+function pokazOdtwarzacz(s) {
+  stopP(); sciezka = s; krokP = 0;
+  const n = s.length - 1, suw = document.getElementById("pSuwak");
+  suw.max = n; document.getElementById("odtwarzacz").hidden = n < 1;
+  const hs = s.map(manhattan); let wzrosty = 0;
+  for (let t = 1; t <= n; t++) if (hs[t] > hs[t - 1]) wzrosty++;
+  document.getElementById("wniosekH").textContent = wzrosty
+    ? `W ${wzrosty} z ${n} kroków h rośnie: najkrótsza droga czasem chwilowo „oddala się” od celu. Algorytm zachłanny, który patrzy tylko na h, zawsze wybiera ruch najlepiej wyglądający w tej chwili — dlatego błądzi, a jego rozwiązania są dłuższe. Czerwona linia nigdy nie jest nad niebieską: heurystyka Manhattan nigdy nie przeszacowuje.`
+    : `Tym razem h maleje w każdym kroku. Wymieszaj mocniej, a zobaczysz kroki, w których h rośnie. Czerwona linia nigdy nie jest nad niebieską: heurystyka Manhattan nigdy nie przeszacowuje.`;
+  rysujP();
+}
+function rysujP() {
+  const s = sciezka[krokP], n = sciezka.length - 1;
+  let ruszany = 0, opis;
+  if (krokP === 0) opis = `<strong>Start.</strong> A* znalazł rozwiązanie w ${n} ruchach.`;
+  else {
+    const prev = sciezka[krokP - 1], p = prev.indexOf(0), i = s.indexOf(0); ruszany = prev[i];
+    opis = `<strong>Krok ${krokP} z ${n}:</strong> klocek ${ruszany} ${KIER[p - i]}.` + (krokP === n ? " <strong>Cel osiągnięty.</strong>" : "");
+  }
+  s.forEach((v, i) => { if (v) { klocki2[v].style.transform = POZ(i); klocki2[v].classList.toggle("na-miejscu", CEL[i] === v); klocki2[v].classList.toggle("ruszany", v === ruszany); } });
+  document.getElementById("opisKroku").innerHTML = opis;
+  document.getElementById("gK").textContent = krokP;
+  document.getElementById("hK").textContent = manhattan(s);
+  document.getElementById("rK").textContent = n - krokP;
+  document.getElementById("pSuwak").value = krokP;
+  document.getElementById("pSuwakO").textContent = krokP;
+  document.getElementById("pWst").disabled = document.getElementById("pPocz").disabled = krokP === 0;
+  document.getElementById("pDal").disabled = krokP === n;
+  wykresP();
+}
+function wykresP() {
+  const { ctx, W, H } = pW, n = sciezka.length - 1, hs = sciezka.map(manhattan), top = Math.max(n, ...hs);
+  const x0 = 34, x1 = W - 10, y0 = H - 24, y1 = 10, sx = t => x0 + t / Math.max(1, n) * (x1 - x0), sy = v => y0 - v / top * (y0 - y1);
+  ctx.clearRect(0, 0, W, H); ctx.font = "11px system-ui, sans-serif"; ctx.fillStyle = "#6b7280"; ctx.strokeStyle = "#e3e5e8"; ctx.lineWidth = 1;
+  const krokY = top > 20 ? 10 : 5;
+  for (let v = 0; v <= top; v += krokY) { ctx.beginPath(); ctx.moveTo(x0, sy(v)); ctx.lineTo(x1, sy(v)); ctx.stroke(); ctx.fillText(v, 6, sy(v) + 4); }
+  ctx.fillText("krok 0", x0, H - 6); ctx.fillText("krok " + n, x1 - 44, H - 6);
+  // bieżący krok
+  ctx.fillStyle = "rgba(181,22,43,0.08)"; ctx.fillRect(sx(krokP) - 6, y1, 12, y0 - y1);
+  // prawdziwa reszta
+  ctx.setLineDash([6, 5]); ctx.strokeStyle = "#1f4e79"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx(0), sy(n)); ctx.lineTo(sx(n), sy(0)); ctx.stroke(); ctx.setLineDash([]);
+  // h
+  ctx.strokeStyle = "#b5162b"; ctx.lineWidth = 2.4; ctx.beginPath();
+  hs.forEach((v, t) => t ? ctx.lineTo(sx(t), sy(v)) : ctx.moveTo(sx(t), sy(v))); ctx.stroke();
+  hs.forEach((v, t) => { ctx.beginPath(); ctx.arc(sx(t), sy(v), t === krokP ? 6 : 2.6, 0, 2 * Math.PI); ctx.fillStyle = t === krokP ? "#fff" : "#b5162b"; ctx.fill(); if (t === krokP) { ctx.lineWidth = 3; ctx.stroke(); } });
+}
+function stopP() { if (zegar) { clearInterval(zegar); zegar = null; } document.getElementById("pGraj").textContent = "▶ Odtwórz"; }
+function idz(t) { krokP = Math.max(0, Math.min(sciezka.length - 1, t)); rysujP(); }
+document.getElementById("pPocz").onclick = () => { stopP(); idz(0); };
+document.getElementById("pWst").onclick = () => { stopP(); idz(krokP - 1); };
+document.getElementById("pDal").onclick = () => { stopP(); idz(krokP + 1); };
+document.getElementById("pSuwak").oninput = e => { stopP(); idz(+e.target.value); };
+function graj() {
+  if (krokP >= sciezka.length - 1) idz(0);
+  document.getElementById("pGraj").textContent = "⏸ Pauza";
+  zegar = setInterval(() => { if (krokP >= sciezka.length - 1) return stopP(); idz(krokP + 1); }, +document.getElementById("pTempo").value);
+}
+document.getElementById("pGraj").onclick = () => { if (zegar) stopP(); else graj(); };
+document.getElementById("pTempo").onchange = () => { if (zegar) { stopP(); graj(); } };
 
 // ================= KROK 4: wybuch =================
 const PROBLEMY = [

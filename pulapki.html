@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gdzie AI zawodzi</title>
+<meta name="description" content="Interaktywny materiał do wykładu: skąd się bierze fałszywe 99% skuteczności, wyciek danych i przykłady kontradyktoryjne.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .opcje-modelu { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.4rem 0 0.8rem; }
+  .opcje-modelu button.wybrany { background: var(--granat); color: #fff; }
+  .legenda { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: 0.85rem; margin: 0.4rem 0; }
+  .legenda span::before { content: ""; display: inline-block; width: 0.8em; height: 0.8em; border-radius: 50%; margin-right: 0.35em; vertical-align: -0.05em; background: var(--k); }
+  .macierz td, .macierz th { text-align: center; }
+  .macierz td b { font-family: var(--mono); font-size: 1.1rem; }
+  .porownanie { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  @media (max-width: 560px) { .porownanie { grid-template-columns: 1fr; } }
+  .porownanie button.wybrany { background: var(--granat); color: #fff; }
+  .wielki { font-family: var(--mono); font-size: 2.2rem; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="marka" href="index.html">Kompetencje akademickie · AI</a>
+  <a href="reprezentacja.html">Reprezentacja</a>
+  <a href="uczenie.html">Uczenie</a>
+  <a href="ocena.html">Ocena twierdzeń</a>
+  <a href="ai-w-nauce.html">AI w nauce</a>
+</nav>
+
+<header class="dzial">
+  <div class="wnetrze">
+    <div class="numer">5</div>
+    <h1>Gdzie AI zawodzi</h1>
+    <p>Model może mieć „99% skuteczności” i być bezużyteczny. Może świetnie wypaść w teście i zawieść w praktyce. Sprawdź sam, jak to możliwe.</p>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================================================ -->
+<section id="trafnosc">
+  <h2><span class="krok">Krok 1</span>„Model wykrywa chorobę z 99% skutecznością”</h2>
+  <p>Badamy <strong>1000 osób</strong>. Ustaw, jak często występuje choroba, i wybierz model. Każda kropka to jedna osoba.</p>
+
+  <div class="panel">
+    <div class="suwak"><label for="czest">choroba</label><input id="czest" type="range" min="0.1" max="50" step="0.1" value="1"><output id="oCzest">1%</output></div>
+    <div class="opcje-modelu" id="modele"></div>
+    <div class="uklad">
+      <div>
+        <canvas id="kropki" width="440" height="285" aria-label="1000 osób: wynik modelu dla każdej z nich"></canvas>
+        <div class="legenda">
+          <span style="--k:#2e7d32">chory, wykryty</span>
+          <span style="--k:#c62828">chory, przeoczony</span>
+          <span style="--k:#e08a00">zdrowy, fałszywy alarm</span>
+          <span style="--k:#d2d6db">zdrowy, poprawnie</span>
+        </div>
+      </div>
+      <div>
+        <div class="liczniki">
+          <div class="licznik duzy">trafność<b id="mTraf">–</b></div>
+          <div class="licznik">czułość<b id="mCzul">–</b></div>
+          <div class="licznik">precyzja<b id="mPrec">–</b></div>
+        </div>
+        <p class="maly"><strong>Trafność</strong> — jaki odsetek wszystkich osób model ocenił poprawnie. <strong>Czułość</strong> — jaki odsetek chorych wykrył. <strong>Precyzja</strong> — jaki odsetek alarmów dotyczył naprawdę chorych.</p>
+        <div class="tabela-zawijana">
+          <table class="macierz">
+            <thead><tr><th></th><th>model: „chory”</th><th>model: „zdrowy”</th></tr></thead>
+            <tbody>
+              <tr><th>naprawdę chory</th><td><b id="tp">–</b></td><td><b id="fn">–</b></td></tr>
+              <tr><th>naprawdę zdrowy</th><td><b id="fp">–</b></td><td><b id="tn">–</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="kom1" class="komunikat"></div>
+  </div>
+
+  <details>
+    <summary>1. Przy chorobie dotykającej 1% osób model „zawsze zdrowy” ma 99% trafności. Co jest nie tak?</summary>
+    <div class="odp"><p>Trafność liczy wszystkie osoby razem, a zdrowych jest 99 razy więcej niż chorych. Model, który niczego nie umie, „trafia” w 99% przypadków — i nie wykrywa ani jednego chorego (czułość 0%). Przy rzadkich zjawiskach sama trafność nic nie mówi.</p></div>
+  </details>
+  <details>
+    <summary>2. Prawdziwy test ma czułość 90% i swoistość 95%. Dlaczego przy rzadkiej chorobie większość jego alarmów jest fałszywa?</summary>
+    <div class="odp"><p>Przy częstości 1%: chorych jest 10, test wykrywa 9 z nich. Zdrowych jest 990, a 5% z nich (ok. 50 osób) dostaje fałszywy alarm. Na mniej więcej 58 alarmów tylko 9 dotyczy chorych — precyzja ok. 15%. To nie wada testu, tylko arytmetyka rzadkich zdarzeń. Psychologowie nazywają pomijanie tej arytmetyki <strong>zaniedbywaniem częstości bazowej</strong> (<em>base rate neglect</em>).</p></div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section id="wyciek">
+  <h2><span class="krok">Krok 2</span>Wyciek danych</h2>
+  <p>Mamy 60 pacjentów, od każdego po 6 zdjęć. Model ma rozpoznać, czy pacjent jest chory. Część danych odkładamy do testu — ale <strong>jak</strong> je podzielić?</p>
+
+  <div class="panel">
+    <div class="porownanie">
+      <div class="ramka akcent" style="margin:0">
+        <span class="tytul">Podział losowy (po zdjęciach)</span>
+        <p class="maly">Zdjęcia tego samego pacjenta trafiają i do treningu, i do testu.</p>
+        <div class="wielki" id="wynA">–</div>
+        <p class="maly" id="srA"></p>
+        <button id="pokA">Pokaż na wykresie</button>
+      </div>
+      <div class="ramka zielona" style="margin:0">
+        <span class="tytul">Podział po pacjentach</span>
+        <p class="maly">Pacjenci testowi są dla modelu zupełnie nowi.</p>
+        <div class="wielki" id="wynB">–</div>
+        <p class="maly" id="srB"></p>
+        <button id="pokB">Pokaż na wykresie</button>
+      </div>
+    </div>
+    <canvas id="wykres" width="880" height="380" style="margin-top:1rem" aria-label="Zdjęcia pacjentów jako punkty, z zaznaczonymi danymi testowymi"></canvas>
+    <div class="legenda" style="justify-content:center">
+      <span style="--k:#b5162b">chory</span><span style="--k:#1f4e79">zdrowy</span>
+      <span style="--k:transparent;">○ dane testowe</span><span style="--k:transparent;">✕ błędna odpowiedź modelu</span>
+    </div>
+    <div class="przyciski"><button id="losuj">Losuj nowe dane</button></div>
+    <p class="maly">Model to najprostszy możliwy klasyfikator: dla zdjęcia testowego znajduje najbardziej podobne zdjęcie treningowe i kopiuje jego odpowiedź (metoda najbliższego sąsiada). Każde zdjęcie opisują dwie liczby — pozycja na wykresie.</p>
+  </div>
+
+  <div class="ramka">
+    <span class="tytul">Czego naprawdę nauczył się model?</span>
+    <p>Zdjęcia jednego pacjenta są do siebie bardzo podobne (skupisko punktów). Przy podziale losowym model <strong>rozpoznaje pacjenta, a nie chorobę</strong>: wystarczy, że w treningu widział inne zdjęcie tej samej osoby. Wynik jest świetny — i nic nie mówi o nowych pacjentach. Tylko podział po pacjentach mierzy to, co nas interesuje.</p>
+  </div>
+
+  <details>
+    <summary>Czy to zdarza się w prawdziwych badaniach?</summary>
+    <div class="odp">
+      <p>Tak, i to często. Kapoor i Narayanan znaleźli wycieki danych w setkach prac z kilkunastu dziedzin nauki. W jednym ze studiów przypadku sprawdzili prace z politologii, według których złożone modele uczenia maszynowego przewidują wojny domowe znacznie lepiej niż klasyczna regresja logistyczna. Po usunięciu wycieków ta przewaga praktycznie zniknęła.</p>
+      <p class="maly">S. Kapoor, A. Narayanan, „Leakage and the reproducibility crisis in machine-learning-based science”, <em>Patterns</em>, 2023, <a href="https://doi.org/10.1016/j.patter.2023.100804">doi:10.1016/j.patter.2023.100804</a>.</p>
+    </div>
+  </details>
+  <details>
+    <summary>Dlaczego wynik przy podziale po pacjentach tak bardzo zmienia się między losowaniami?</summary>
+    <div class="odp"><p>Bo pacjentów testowych jest mało (ok. 15). Jeden czy dwóch „nietypowych” pacjentów mocno zmienia wynik. Dlatego rzetelne prace podają nie jeden wynik, ale rozrzut z wielu powtórzeń — i dlatego obok podajemy średnią ze 100 losowań.</p></div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section id="kontr">
+  <h2><span class="krok">Krok 3</span>Niewidoczna zmiana, inna odpowiedź</h2>
+  <p>W słynnym eksperymencie sieć rozpoznawała pandę z pewnością 57,7%. Do zdjęcia dodano niewidoczny dla oka szum — i ta sama sieć uznała, że to gibon, z pewnością 99,3%. Jak to możliwe?</p>
+  <p>Wyobraź sobie najprostszy model: <strong>suma ważona pikseli</strong>. Zmieniamy każdy piksel o maleńką wartość ε, zawsze w stronę, która najbardziej podnosi wynik. Pojedyncza zmiana jest niewidoczna, ale zmian jest tyle, ile pikseli.</p>
+
+  <div class="panel">
+    <div class="suwak"><label for="eps">ε</label><input id="eps" type="range" min="0.5" max="8" step="0.5" value="2"><output id="oEps">2</output></div>
+    <p class="maly">ε — zmiana jednego piksela w skali 0–255 (2 to mniej niż 1% jasności).</p>
+    <div class="tabela-zawijana">
+      <table>
+        <thead><tr><th>obraz</th><th>liczba pikseli</th><th>zmiana wyniku modelu</th></tr></thead>
+        <tbody id="tabEps"></tbody>
+      </table>
+    </div>
+    <p>Zmiana jednego piksela przesuwa wynik o ułamek — tyle co nic. Ale te ułamki się sumują: przy 150 tysiącach pikseli wychodzą tysiące.</p>
+    <p class="maly">Przyjęto przeciętną wagę |w| = 0,01. Zmiana wyniku = ε × liczba pikseli × |w|. Rachunek dla modelu liniowego — sieci głębokie zachowują się podobnie, bo w dużej części są „prawie liniowe”.</p>
+  </div>
+
+  <div class="ramka">
+    <span class="tytul">Wniosek</span>
+    <p>Im więcej wymiarów, tym więcej „miejsc”, w których można niezauważalnie popchnąć wynik. Szumu nie losuje się — wylicza się go <strong>gradientem</strong>, tym samym narzędziem, którym model był uczony. Model nie widzi pandy, tylko liczby.</p>
+    <p class="maly">I. Goodfellow, J. Shlens, C. Szegedy, „Explaining and harnessing adversarial examples”, ICLR 2015, <a href="https://arxiv.org/abs/1412.6572">arXiv:1412.6572</a> (oryginalny rysunek z pandą: rys. 1).</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="halucynacje">
+  <h2><span class="krok">Krok 4</span>Halucynacje</h2>
+  <p>Model językowy uczy się przewidywać <strong>prawdopodobny</strong> ciąg dalszy tekstu, a nie <strong>prawdziwy</strong>. Dlatego potrafi podać nieistniejący artykuł, zmyślony cytat albo błędny wzór — tym samym pewnym tonem co fakty. To nie usterka, którą łatwo usunąć, tylko skutek tego, czego model był uczony.</p>
+  <div class="ramka akcent">
+    <span class="tytul">Co z tym zrobić</span>
+    <p>Każdy fakt, liczbę i źródło podane przez model sprawdzaj w źródle pierwotnym. Jak to robić — w materiale <a href="ocena.html">„Jak oceniać twierdzenia o AI”</a>.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>dr inż. Paweł Róg · Uniwersytet SWPS · materiał do wykładu „AI to informatyka w działaniu”</footer>
+
+<script>
+"use strict";
+function plotno(id) {
+  const c = document.getElementById(id), W = c.width, H = c.height, r = window.devicePixelRatio || 1;
+  c.width = W * r; c.height = H * r; const ctx = c.getContext("2d"); ctx.scale(r, r);
+  return { c, ctx, W, H };
+}
+const proc = (v, d = 1) => isFinite(v) ? (v * 100).toFixed(d).replace(".", ",") + "%" : "—";
+
+// ================= KROK 1 =================
+const MODELE = [
+  { n: "Zawsze „zdrowy”", czul: 0, swoi: 1 },
+  { n: "Rzut monetą", czul: 0.5, swoi: 0.5 },
+  { n: "Prawdziwy test (czułość 90%, swoistość 95%)", czul: 0.9, swoi: 0.95 },
+];
+let model = 0;
+const mEl = document.getElementById("modele");
+MODELE.forEach((m, k) => { const b = document.createElement("button"); b.textContent = m.n; b.onclick = () => { model = k; krok1(); }; mEl.appendChild(b); });
+const pK = plotno("kropki");
+function krok1() {
+  const p = +document.getElementById("czest").value / 100, m = MODELE[model], N = 1000;
+  document.getElementById("oCzest").textContent = (p * 100).toFixed(1).replace(".0", "").replace(".", ",") + "%";
+  [...mEl.children].forEach((b, k) => b.classList.toggle("wybrany", k === model));
+  const chorzy = Math.round(N * p), zdrowi = N - chorzy;
+  const tp = Math.round(chorzy * m.czul), fn = chorzy - tp, tn = Math.round(zdrowi * m.swoi), fp = zdrowi - tn;
+  for (const [id, v] of [["tp", tp], ["fn", fn], ["fp", fp], ["tn", tn]]) document.getElementById(id).textContent = v;
+  const traf = (tp + tn) / N, czul = chorzy ? tp / chorzy : NaN, prec = tp + fp ? tp / (tp + fp) : NaN;
+  document.getElementById("mTraf").textContent = proc(traf);
+  document.getElementById("mCzul").textContent = proc(czul);
+  document.getElementById("mPrec").textContent = proc(prec);
+  // kropki: 40 × 25
+  const { ctx, W, H } = pK, kol = 40, r = W / kol;
+  ctx.clearRect(0, 0, W, H);
+  const lista = [...Array(tp).fill("#2e7d32"), ...Array(fn).fill("#c62828"), ...Array(fp).fill("#e08a00"), ...Array(tn).fill("#d2d6db")];
+  lista.forEach((c, t) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc((t % kol + 0.5) * r, (Math.floor(t / kol) + 0.5) * (H / 25), r * 0.38, 0, 2 * Math.PI); ctx.fill(); });
+  const k = document.getElementById("kom1");
+  if (model === 0) { k.textContent = `Model niczego nie umie, a ma ${proc(traf)} trafności — bo chorych jest tylko ${chorzy}.`; k.className = "komunikat zle"; }
+  else if (model === 2 && prec < 0.5) { k.textContent = `Dobry test, a jednak tylko ${proc(prec, 0)} alarmów dotyczy chorych: ${tp} prawdziwych na ${tp + fp} wszystkich.`; k.className = "komunikat"; }
+  else if (model === 1) { k.textContent = "Rzut monetą wykrywa połowę chorych — i co drugą zdrową osobę oznacza jako chorą."; k.className = "komunikat"; }
+  else { k.textContent = ""; k.className = "komunikat"; }
+}
+document.getElementById("czest").addEventListener("input", krok1);
+krok1();
+
+// ================= KROK 2: wyciek =================
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const P = 60, K = 6, PRZES = 2.5, SIG = 0.15;
+function generuj(seed) {
+  const r = mulberry32(seed), g = () => { const u = r() || 1e-9, v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  const pts = [];
+  for (let p = 0; p < P; p++) {
+    const lab = r() < 0.5 ? 1 : 0, cx = r() * 8 + lab * PRZES, cy = r() * 10;
+    for (let k = 0; k < K; k++) pts.push({ p, lab, x: cx + g() * SIG, y: cy + g() * SIG });
+  }
+  const rs = mulberry32(seed * 7919 + 1);
+  const testA = pts.map(() => rs() < 0.25);
+  const tp = new Set(); for (let p = 0; p < P; p++) if (rs() < 0.25) tp.add(p);
+  const testB = pts.map(q => tp.has(q.p));
+  return { pts, testA, testB };
+}
+function ocen(pts, test) {
+  let ok = 0, n = 0; const odp = [];
+  pts.forEach((q, i) => {
+    if (!test[i]) { odp.push(null); return; }
+    let best = Infinity, bl = 0;
+    pts.forEach((t, j) => { if (test[j]) return; const d = (t.x - q.x) ** 2 + (t.y - q.y) ** 2; if (d < best) { best = d; bl = t.lab; } });
+    n++; if (bl === q.lab) ok++; odp.push(bl);
+  });
+  return { acc: ok / n, odp };
+}
+// średnia ze 100 losowań (liczona raz)
+let sA = 0, sB = 0;
+for (let s = 1; s <= 100; s++) { const d = generuj(1000 + s); sA += ocen(d.pts, d.testA).acc; sB += ocen(d.pts, d.testB).acc; }
+document.getElementById("srA").textContent = `średnio ze 100 losowań: ${proc(sA / 100, 0)}`;
+document.getElementById("srB").textContent = `średnio ze 100 losowań: ${proc(sB / 100, 0)}`;
+
+const pW = plotno("wykres");
+let seed = 3, dane, widok = "A";
+function krok2() {
+  dane = generuj(seed);
+  const a = ocen(dane.pts, dane.testA), b = ocen(dane.pts, dane.testB);
+  document.getElementById("wynA").textContent = proc(a.acc, 0);
+  document.getElementById("wynB").textContent = proc(b.acc, 0);
+  document.getElementById("pokA").classList.toggle("wybrany", widok === "A");
+  document.getElementById("pokB").classList.toggle("wybrany", widok === "B");
+  const test = widok === "A" ? dane.testA : dane.testB, odp = (widok === "A" ? a : b).odp;
+  const { ctx, W, H } = pW, sx = v => 10 + v / 10.8 * (W - 20), sy = v => H - 10 - (v + 0.3) / 10.6 * (H - 20);
+  ctx.clearRect(0, 0, W, H);
+  dane.pts.forEach((q, i) => {
+    const kol = q.lab ? "#b5162b" : "#1f4e79";
+    ctx.beginPath(); ctx.arc(sx(q.x), sy(q.y), 3.2, 0, 2 * Math.PI);
+    if (test[i]) { ctx.strokeStyle = kol; ctx.lineWidth = 1.8; ctx.stroke(); }
+    else { ctx.fillStyle = kol; ctx.globalAlpha = 0.75; ctx.fill(); ctx.globalAlpha = 1; }
+    if (test[i] && odp[i] !== q.lab) {
+      ctx.strokeStyle = "#111"; ctx.lineWidth = 2; const x = sx(q.x), y = sy(q.y), d = 6;
+      ctx.beginPath(); ctx.moveTo(x - d, y - d); ctx.lineTo(x + d, y + d); ctx.moveTo(x + d, y - d); ctx.lineTo(x - d, y + d); ctx.stroke();
+    }
+  });
+}
+document.getElementById("pokA").onclick = () => { widok = "A"; krok2(); };
+document.getElementById("pokB").onclick = () => { widok = "B"; krok2(); };
+document.getElementById("losuj").onclick = () => { seed = Math.floor(Math.random() * 1e6) + 2000; krok2(); };
+krok2();
+
+// ================= KROK 3 =================
+const OBRAZY = [["dwa piksele", 2], ["cyfra 28 × 28", 784], ["zdjęcie 224 × 224, kolor (typowe wejście sieci rozpoznającej obrazy)", 224 * 224 * 3], ["zdjęcie 12 Mpx, kolor", 36e6]];
+function krok3() {
+  const e = +document.getElementById("eps").value; document.getElementById("oEps").textContent = String(e).replace(".", ",");
+  document.getElementById("tabEps").innerHTML = OBRAZY.map(([n, k]) =>
+    `<tr><td>${n}</td><td>${k.toLocaleString("pl-PL")}</td><td><b>${(e * k * 0.01).toLocaleString("pl-PL", { maximumFractionDigits: 2 })}</b></td></tr>`).join("");
+}
+document.getElementById("eps").addEventListener("input", krok3);
+krok3();
+</script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reprezentacja</title>
+<meta name="description" content="Interaktywny materiał do wykładu: jak komputer zapisuje obraz, tekst i wiedzę.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .rysunek { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 1rem; align-items: start; }
+  @media (max-width: 760px) { .rysunek { grid-template-columns: minmax(0, 1fr); } }
+  .rysunek > div, .filtr-uklad > div { min-width: 0; }
+  #plotno { background: #000; cursor: crosshair; max-width: 300px; }
+  .przewijane { overflow-x: auto; }
+  #liczby { min-width: 560px; }
+  .jadro { display: grid; grid-template-columns: repeat(3, 3.6rem); gap: 4px; }
+  .jadro input { width: 100%; text-align: center; font-family: var(--mono); padding: 0.3rem 0.1rem; }
+  .filtr-uklad { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 1rem; align-items: center; }
+  @media (max-width: 760px) { .filtr-uklad { grid-template-columns: 1fr; } }
+  .rachunek { font-family: var(--mono); font-size: 0.82rem; overflow-x: auto; }
+  .rachunek table { width: auto; margin: 0.3rem 0; font-size: 0.82rem; }
+  .rachunek td { padding: 0.15rem 0.45rem; text-align: right; background: none !important; border: 1px solid var(--linia); }
+  .tokeny { display: flex; flex-wrap: wrap; gap: 4px; margin: 0.6rem 0; }
+  .tok { font-family: var(--mono); font-size: 0.95rem; padding: 0.15rem 0.35rem; border-radius: 3px; border: 1px solid rgba(0,0,0,0.12); white-space: pre; }
+  .tok small { display: block; font-size: 0.62rem; color: var(--szary); text-align: center; }
+  textarea { font: inherit; width: 100%; min-height: 4.2rem; padding: 0.5rem; border: 1.5px solid var(--linia); border-radius: 4px; resize: vertical; }
+  .scalenia { font-family: var(--mono); font-size: 0.85rem; color: var(--szary); }
+  svg text { font-family: var(--font); }
+  .graf-krok { min-height: 3em; }
+  select { font: inherit; padding: 0.35rem; border-radius: 4px; border: 1.5px solid var(--linia); max-width: 100%; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="marka" href="index.html">Kompetencje akademickie · AI</a>
+  <a href="uczenie.html">Uczenie</a>
+  <a href="pulapki.html">Pułapki</a>
+  <a href="ocena.html">Ocena twierdzeń</a>
+  <a href="ai-w-nauce.html">AI w nauce</a>
+</nav>
+
+<header class="dzial">
+  <div class="wnetrze">
+    <div class="numer">1</div>
+    <h1>Reprezentacja</h1>
+    <p>Zanim komputer cokolwiek „zrozumie”, ktoś musi zdecydować, jak zapisać świat w liczbach. Zobacz, jak wyglądają obraz, tekst i wiedza od strony komputera.</p>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================================================ -->
+<section id="obraz">
+  <h2><span class="krok">Krok 1</span>Obraz to macierz liczb</h2>
+  <p>Narysuj cyfrę myszką lub palcem. Siatka ma <strong>28 × 28 = 784</strong> pikseli — tyle samo co w klasycznym zbiorze cyfr MNIST. Każdy piksel to liczba od 0 (czerń) do 255 (biel).</p>
+
+  <div class="panel">
+    <div class="rysunek">
+      <div>
+        <canvas id="plotno" width="280" height="280" aria-label="Pole do rysowania cyfry 28 na 28 pikseli"></canvas>
+        <div class="przyciski">
+          <button id="wyczysc">Wyczyść</button>
+          <button id="przyklad">Wczytaj przykład</button>
+        </div>
+      </div>
+      <div>
+        <div class="przewijane"><canvas id="liczby" width="616" height="392" aria-label="Wartości wszystkich pikseli"></canvas></div>
+        <div class="podpis">te same 784 piksele zapisane jako liczby</div>
+      </div>
+    </div>
+    <h3>Tak widzi to sieć neuronowa</h3>
+    <canvas id="wektor" width="784" height="26" aria-label="Obraz rozwinięty w jeden wektor 784 liczb"></canvas>
+    <div class="podpis">wiersz po wierszu, jeden za drugim: <strong>wektor 784 liczb</strong>. Sieć nie wie nawet, że to był kwadrat.</div>
+  </div>
+
+  <div class="ramka">
+    <span class="tytul">A obraz kolorowy?</span>
+    <p>To trzy takie macierze: czerwona, zielona i niebieska. Zdjęcie z telefonu o rozdzielczości 12 megapikseli to ok. <strong>36 milionów liczb</strong>.</p>
+  </div>
+
+  <details>
+    <summary>Jak komputer ma odróżnić 7 od 1, skoro widzi tylko liczby?</summary>
+    <div class="odp"><p>Potrzebujemy funkcji, która z 784 liczb zrobi 10 prawdopodobieństw (po jednym dla każdej cyfry). Nikt nie pisze takiej funkcji ręcznie — jej parametry dobiera się automatycznie z tysięcy przykładów. To jest uczenie (<a href="uczenie.html">materiał 3</a>).</p></div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section id="filtr">
+  <h2><span class="krok">Krok 2</span>Przyłóż filtr do swojego rysunku</h2>
+  <p>Sieć konwolucyjna (CNN) przesuwa po obrazie mały <strong>filtr 3 × 3</strong>: mnoży piksele okna przez liczby filtra i sumuje. Wynik jest duży tam, gdzie fragment obrazu „pasuje” do filtra. Wybierz filtr albo wpisz własne liczby, a potem <strong>kliknij w mapę cech</strong>, żeby zobaczyć rachunek.</p>
+
+  <div class="panel">
+    <div class="presety" style="display:flex;flex-wrap:wrap;gap:0.4rem;align-items:center">
+      <span class="maly">Filtr:</span>
+      <button data-f="pion">krawędzie pionowe</button>
+      <button data-f="poziom">krawędzie poziome</button>
+      <button data-f="ukos">ukosy</button>
+      <button data-f="rozmycie">rozmycie</button>
+    </div>
+    <div class="filtr-uklad" style="margin-top:0.8rem">
+      <div>
+        <canvas id="wejscie" width="280" height="280" aria-label="Twój rysunek z zaznaczonym oknem filtra" style="max-width:280px;margin:0 auto"></canvas>
+        <div class="podpis">Twój rysunek</div>
+      </div>
+      <div style="text-align:center">
+        <div class="jadro" id="jadro" aria-label="Wartości filtra 3 na 3"></div>
+        <div class="podpis">filtr 3 × 3</div>
+      </div>
+      <div>
+        <canvas id="mapa" width="260" height="260" aria-label="Mapa cech; kliknij komórkę, aby zobaczyć rachunek" style="max-width:260px;margin:0 auto;cursor:pointer"></canvas>
+        <div class="podpis">mapa cech 26 × 26 — czerwone: wynik dodatni, granatowe: ujemny</div>
+      </div>
+    </div>
+    <div class="rachunek" id="rachunek"><p class="maly">Kliknij komórkę mapy cech.</p></div>
+  </div>
+
+  <details>
+    <summary>Dlaczego mapa cech ma 26 × 26, a nie 28 × 28?</summary>
+    <div class="odp"><p>Okno 3 × 3 da się położyć tylko tak, żeby w całości mieściło się w obrazie: 28 − 3 + 1 = 26 położeń w poziomie i tyle samo w pionie. Żeby zachować rozmiar, dokleja się dookoła ramkę zer (<em>padding</em>).</p></div>
+  </details>
+  <details>
+    <summary>Skąd sieć bierze liczby w filtrach?</summary>
+    <div class="odp"><p>Nie projektuje ich człowiek. Na początku są losowe, a uczenie poprawia je krok po kroku tak, żeby sieć rzadziej się myliła — dokładnie jak parametry <code>a</code> i <code>b</code> w <a href="uczenie.html">materiale 3</a>. Często wychodzą przy tym filtry podobne do „krawędzi pionowych” czy „ukosów”.</p></div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section id="tekst">
+  <h2><span class="krok">Krok 3</span>Tekst to tokeny</h2>
+  <p>Model językowy nie widzi liter ani słów, tylko <strong>tokeny</strong> — kawałki tekstu, z których każdy ma swój numer. Skąd wiadomo, na jakie kawałki dzielić? <strong>Tokenizer uczy się tego z tekstu</strong>: zaczyna od pojedynczych znaków i wielokrotnie skleja parę, która występuje najczęściej (algorytm BPE).</p>
+  <p>Poniższy tokenizer nauczył się na krótkim polskim tekście (ok. 400 słów). Wpisz własne zdanie i zmieniaj liczbę sklejeń.</p>
+
+  <div class="panel">
+    <textarea id="wpis" aria-label="Tekst do podziału na tokeny">Uczymy się samodzielnie, a model językowy tylko przewiduje następne słowo.</textarea>
+    <div class="suwak"><label for="ileScal">sklejenia</label><input id="ileScal" type="range" min="0" max="300" step="1" value="150"><output id="oScal">150</output></div>
+    <div class="liczniki">
+      <div class="licznik">znaków<b id="nZn">–</b></div>
+      <div class="licznik duzy">tokenów<b id="nTok">–</b></div>
+    </div>
+    <div class="tokeny" id="tokeny"></div>
+    <p class="maly">Znak ▁ oznacza początek słowa (spację przed nim). Mała liczba pod tokenem to jego numer w słowniku.</p>
+    <p class="scalenia" id="scalenia"></p>
+  </div>
+
+  <div class="ramka">
+    <span class="tytul">Co z tego wynika</span>
+    <p>Przy 0 sklejeń każdy znak to osobny token. Im więcej sklejeń, tym dłuższe tokeny i tym mniej ich trzeba na to samo zdanie. Słowa, których tokenizer „nie widział” w tekście treningowym, rozpadają się na drobne kawałki. Prawdziwe tokenizery uczą się na ogromnych zbiorach tekstów, w większości angielskich — dlatego polski tekst zwykle potrzebuje więcej tokenów niż angielski o tej samej treści.</p>
+  </div>
+
+  <details>
+    <summary>A co dalej dzieje się z tokenami?</summary>
+    <div class="odp"><p>Każdy numer tokenu zamienia się na <strong>wektor</strong>: listę kilkuset albo kilku tysięcy liczb (tzw. osadzenie, <em>embedding</em>). Te liczby też są dobierane w czasie uczenia, tak że tokeny o podobnym znaczeniu dostają podobne wektory. Model językowy pracuje wyłącznie na takich wektorach.</p></div>
+  </details>
+  <details>
+    <summary>Dlaczego model językowy ma kłopot z pytaniem „ile liter r jest w słowie…”?</summary>
+    <div class="odp"><p>Bo nie dostaje liter, tylko tokeny. Słowo może być jednym tokenem albo trzema kawałkami — w żadnym przypadku model nie „widzi” pojedynczych liter, chyba że nauczył się ich składu z innych przykładów.</p></div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section id="graf">
+  <h2><span class="krok">Krok 4</span>Wiedza to graf</h2>
+  <p>Fakty można zapisać jako <strong>graf</strong>: węzły to obiekty, krawędzie to relacje. Odpowiedź na pytanie to wtedy <strong>ścieżka w grafie</strong>. Wybierz pytanie:</p>
+
+  <div class="panel">
+    <select id="pytanie" aria-label="Pytanie do grafu wiedzy"></select>
+    <svg id="svg" viewBox="0 0 720 300" style="width:100%;height:auto;margin-top:0.8rem" role="img" aria-label="Graf wiedzy"></svg>
+    <div class="przyciski"><button class="glowny" id="dalejG">Następny krok</button><button id="resetG">Od początku</button></div>
+    <div class="graf-krok" id="grafKrok"></div>
+  </div>
+
+  <div class="ramka">
+    <span class="tytul">Po co to, skoro są modele językowe?</span>
+    <p>Odpowiedź z grafu można <strong>uzasadnić</strong> — wskazać konkretną ścieżkę faktów. Model językowy podaje odpowiedź prawdopodobną, a nie sprawdzoną. Dlatego systemy, które muszą być wiarygodne, często łączą model językowy z bazą wiedzy, z której model pobiera fakty.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>dr inż. Paweł Róg · Uniwersytet SWPS · materiał do wykładu „AI to informatyka w działaniu”</footer>
+
+<script>
+"use strict";
+const N = 28;
+const C = { granat: "#1f4e79", akcent: "#b5162b", szary: "#6b7280", linia: "#d7dade" };
+const PRZYKLAD = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,4,16,20,20,20,20,20,20,20,20,20,20,20,20,14,2,0,0,0,0,0,0],[0,0,0,0,1,0,31,137,172,168,169,169,169,169,169,169,169,169,169,173,113,11,0,1,0,0,0,0],[0,0,0,0,1,0,49,213,255,255,255,255,255,255,255,255,255,255,255,255,198,55,1,1,0,0,0,0],[0,0,0,0,1,0,38,168,210,206,207,207,207,207,207,206,206,208,232,254,236,104,3,0,0,0,0,0],[0,0,0,0,0,0,9,38,48,47,47,47,47,47,47,48,45,73,193,255,203,54,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,83,228,248,126,8,0,1,0,0,0,0],[0,0,0,0,0,0,0,1,1,1,1,1,1,1,2,1,27,168,255,203,52,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,87,230,248,127,9,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,25,167,255,202,52,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,88,230,248,127,9,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,1,0,35,176,255,201,52,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,4,107,240,241,115,8,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,1,0,37,185,255,185,38,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,4,106,240,240,106,4,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,37,185,255,185,37,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,4,106,240,240,106,4,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,1,0,36,185,255,185,37,0,1,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,0,5,110,242,240,106,4,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,1,0,15,135,241,185,37,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,3,37,103,78,5,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]];
+function plotno(id) {
+  const c = document.getElementById(id), W = c.width, H = c.height, r = window.devicePixelRatio || 1;
+  c.width = W * r; c.height = H * r; const ctx = c.getContext("2d"); ctx.scale(r, r);
+  return { c, ctx, W, H };
+}
+
+// ================= KROK 1: rysowanie =================
+const img = new Float32Array(N * N);           // wartości 0..255
+const pR = plotno("plotno"), pL = plotno("liczby"), pV = plotno("wektor"), pW = plotno("wejscie"), pM = plotno("mapa");
+let okno = null;                                 // [wiersz, kolumna] wybranej komórki mapy cech
+
+function rysujObraz(p, zOknem) {
+  const { ctx, W } = p, k = W / N;
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+    const v = Math.round(img[i * N + j]); ctx.fillStyle = `rgb(${v},${v},${v})`; ctx.fillRect(j * k, i * k, k, k);
+  }
+  ctx.strokeStyle = "rgba(255,255,255,0.07)"; ctx.lineWidth = 1;
+  for (let t = 0; t <= N; t++) { ctx.beginPath(); ctx.moveTo(t * k, 0); ctx.lineTo(t * k, W); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, t * k); ctx.lineTo(W, t * k); ctx.stroke(); }
+  if (zOknem && okno) { ctx.strokeStyle = C.akcent; ctx.lineWidth = 3; ctx.strokeRect(okno[1] * k, okno[0] * k, 3 * k, 3 * k); }
+}
+function rysujLiczby() {
+  const { ctx, W, H } = pL, kw = W / N, kh = H / N;
+  ctx.clearRect(0, 0, W, H); ctx.font = "9px ui-monospace, Menlo, Consolas, monospace"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+    const v = Math.round(img[i * N + j]);
+    if (v) { ctx.fillStyle = `rgba(31,78,121,${0.08 + 0.5 * v / 255})`; ctx.fillRect(j * kw, i * kh, kw, kh); }
+    ctx.fillStyle = v > 140 ? "#fff" : v ? "#1d1f23" : "#c3c7cc";
+    ctx.fillText(String(v), j * kw + kw - 2, i * kh + kh / 2 + 0.5);
+  }
+}
+function rysujWektor() {
+  const { ctx, W, H } = pV, k = W / (N * N);
+  for (let t = 0; t < N * N; t++) { const v = Math.round(img[t]); ctx.fillStyle = `rgb(${v},${v},${v})`; ctx.fillRect(t * k, 0, k + 0.5, H); }
+}
+function odswiez() { rysujObraz(pR, false); rysujLiczby(); rysujWektor(); filtruj(); }
+
+function maluj(x, y) {      // x, y w jednostkach siatki
+  for (let i = Math.floor(y - 2); i <= Math.ceil(y + 2); i++) for (let j = Math.floor(x - 2); j <= Math.ceil(x + 2); j++) {
+    if (i < 0 || j < 0 || i >= N || j >= N) continue;
+    const d = Math.hypot(j + 0.5 - x, i + 0.5 - y), v = 255 * Math.max(0, Math.min(1, (1.75 - d) / 0.9));
+    img[i * N + j] = Math.max(img[i * N + j], v);
+  }
+}
+let ost = null;
+function pozycja(e) { const r = pR.c.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * N, (e.clientY - r.top) / r.height * N]; }
+pR.c.addEventListener("pointerdown", e => { pR.c.setPointerCapture(e.pointerId); ost = pozycja(e); maluj(...ost); odswiez(); });
+pR.c.addEventListener("pointermove", e => {
+  if (!ost) return;
+  const nowy = pozycja(e), kroki = Math.ceil(Math.hypot(nowy[0] - ost[0], nowy[1] - ost[1]) / 0.3);
+  for (let s = 1; s <= kroki; s++) maluj(ost[0] + (nowy[0] - ost[0]) * s / kroki, ost[1] + (nowy[1] - ost[1]) * s / kroki);
+  ost = nowy; odswiez();
+});
+["pointerup", "pointercancel", "pointerleave"].forEach(t => pR.c.addEventListener(t, () => ost = null));
+document.getElementById("wyczysc").onclick = () => { img.fill(0); okno = null; odswiez(); };
+document.getElementById("przyklad").onclick = () => { PRZYKLAD.flat().forEach((v, t) => img[t] = v); okno = null; odswiez(); };
+
+// ================= KROK 2: filtr =================
+const FILTRY = {
+  pion: [[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]],
+  poziom: [[-1, -1, -1], [0, 0, 0], [1, 1, 1]],
+  ukos: [[0, 1, 1], [-1, 0, 1], [-1, -1, 0]],
+  rozmycie: [[1, 1, 1], [1, 1, 1], [1, 1, 1]].map(r => r.map(v => +(v / 9).toFixed(2))),
+};
+const jadroEl = document.getElementById("jadro"), wejscia = [];
+for (let t = 0; t < 9; t++) {
+  const inp = document.createElement("input"); inp.type = "number"; inp.step = "0.1";
+  inp.setAttribute("aria-label", `wartość filtra, wiersz ${Math.floor(t / 3) + 1}, kolumna ${t % 3 + 1}`);
+  inp.addEventListener("input", filtruj); jadroEl.appendChild(inp); wejscia.push(inp);
+}
+function ustawFiltr(nazwa) { FILTRY[nazwa].flat().forEach((v, t) => wejscia[t].value = v); filtruj(); }
+document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => ustawFiltr(b.dataset.f));
+const jadro = () => wejscia.map(w => parseFloat(String(w.value).replace(",", ".")) || 0);
+const M = N - 2;
+function splot() {
+  const k = jadro(), out = new Float32Array(M * M);
+  for (let i = 0; i < M; i++) for (let j = 0; j < M; j++) {
+    let s = 0; for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) s += img[(i + a) * N + j + b] * k[a * 3 + b];
+    out[i * M + j] = s;
+  }
+  return out;
+}
+function filtruj() {
+  const out = splot(); let mx = 0; for (const v of out) mx = Math.max(mx, Math.abs(v));
+  const { ctx, W } = pM, k = W / M;
+  ctx.clearRect(0, 0, W, W);
+  for (let i = 0; i < M; i++) for (let j = 0; j < M; j++) {
+    const v = mx ? out[i * M + j] / mx : 0, t = Math.abs(v);
+    const [r, g, b] = v >= 0 ? [181, 22, 43] : [31, 78, 121];
+    ctx.fillStyle = `rgb(${Math.round(255 + (r - 255) * t)},${Math.round(255 + (g - 255) * t)},${Math.round(255 + (b - 255) * t)})`;
+    ctx.fillRect(j * k, i * k, k, k);
+  }
+  ctx.strokeStyle = "rgba(0,0,0,0.06)";
+  for (let t = 0; t <= M; t++) { ctx.beginPath(); ctx.moveTo(t * k, 0); ctx.lineTo(t * k, W); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, t * k); ctx.lineTo(W, t * k); ctx.stroke(); }
+  if (okno) { ctx.strokeStyle = "#111"; ctx.lineWidth = 2.5; ctx.strokeRect(okno[1] * k, okno[0] * k, k, k); }
+  rysujObraz(pW, true);
+  pokazRachunek(out);
+}
+const fl = v => (Math.round(v * 100) / 100).toString().replace(".", ",");
+function pokazRachunek(out) {
+  const el = document.getElementById("rachunek");
+  if (!okno) { el.innerHTML = '<p class="maly">Kliknij komórkę mapy cech.</p>'; return; }
+  const [i, j] = okno, k = jadro();
+  let wiersze = "", skladniki = [];
+  for (let a = 0; a < 3; a++) {
+    wiersze += "<tr>";
+    for (let b = 0; b < 3; b++) {
+      const p = Math.round(img[(i + a) * N + j + b]); wiersze += `<td>${p} × ${fl(k[a * 3 + b])}</td>`;
+      if (p && k[a * 3 + b]) skladniki.push(p * k[a * 3 + b]);
+    }
+    wiersze += "</tr>";
+  }
+  el.innerHTML = `<p><strong>Komórka (${i + 1}, ${j + 1})</strong> — okno zaznaczone na rysunku czerwoną ramką. Piksel × liczba filtra:</p>
+    <table>${wiersze}</table>
+    <p>Suma: ${skladniki.length ? skladniki.map(fl).join(" + ").replace(/\+ -/g, "− ") : "0"} = <strong>${fl(out[i * M + j])}</strong></p>`;
+}
+pM.c.addEventListener("click", e => {
+  const r = pM.c.getBoundingClientRect();
+  okno = [Math.min(M - 1, Math.floor((e.clientY - r.top) / r.height * M)), Math.min(M - 1, Math.floor((e.clientX - r.left) / r.width * M))];
+  filtruj();
+});
+
+PRZYKLAD.flat().forEach((v, t) => img[t] = v);
+okno = [4, 11];
+ustawFiltr("pion");
+odswiez();
+
+// ================= KROK 3: tokenizer BPE =================
+const KORPUS = `Studia to czas, w którym uczymy się samodzielnie myśleć. Na wykładzie poznajemy pojęcia, a na ćwiczeniach sprawdzamy, czy naprawdę je rozumiemy. Dobry student zadaje pytania, sprawdza źródła i nie przyjmuje niczego na wiarę.
+Sztuczna inteligencja nie jest magią. Model językowy przewiduje następne słowo na podstawie słów, które już widział. Model uczy się na danych, a dane trzeba najpierw zapisać w postaci liczb. Obraz zapisujemy jako macierz liczb, a tekst jako ciąg tokenów. Każdy token ma swój numer, a każdy numer zamienia się na wektor liczb.
+Uczenie modelu polega na tym, że model popełnia błąd, a my poprawiamy jego parametry tak, żeby następnym razem pomylił się mniej. Powtarzamy to wiele razy. Dlatego mówimy, że uczenie to optymalizacja. Im więcej danych i parametrów, tym więcej obliczeń potrzebujemy.
+Modele językowe potrafią pisać teksty, tłumaczyć, streszczać i odpowiadać na pytania. Potrafią też się mylić, i to bardzo przekonująco. Model może wymyślić cytat, autora albo artykuł, którego nigdy nie było. Dlatego każdą informację od modelu trzeba sprawdzić w źródle.
+Na uczelni obowiązują zasady korzystania z narzędzi sztucznej inteligencji. W sylabusie przedmiotu prowadzący określa, czy w danym zadaniu wolno używać takich narzędzi. Jeśli wolno, student deklaruje, w jaki sposób z nich korzystał. Student odpowiada za każdą pracę, którą oddaje, i musi umieć ją wyjaśnić.
+Najlepiej uczymy się wtedy, gdy sami próbujemy rozwiązać problem. Model może zadawać nam pytania, wskazywać błędy i podpowiadać, ale myśleć musimy sami. Wysiłek jest częścią nauki. Kto oddaje myślenie maszynie, ten szybko zapomina, czego się nauczył.
+Informatyka daje nam narzędzia: struktury danych, algorytmy, metody numeryczne i statystykę. Dzięki nim rozumiemy, jak działają systemy sztucznej inteligencji, i potrafimy ocenić, czy ich wyniki są wiarygodne. Warto pytać, na jakich danych model był uczony, z czym go porównano i jak zmierzono jego skuteczność.`;
+const BAZA = "▁";
+function slowa(tekst) { return tekst.toLowerCase().split(/\s+/).filter(Boolean).map(s => BAZA + s); }
+// uczenie BPE
+const czestosc = new Map();
+for (const s of slowa(KORPUS)) czestosc.set(s, (czestosc.get(s) || 0) + 1);
+let podzialy = [...czestosc.keys()].map(s => [...s]);
+const wagi = [...czestosc.values()];
+const znaki = [...new Set(podzialy.flat())].sort();
+const slownik = new Map(znaki.map((z, t) => [z, t]));
+const SCALENIA = [];
+for (let it = 0; it < 300; it++) {
+  const pary = new Map();
+  podzialy.forEach((p, w) => { for (let t = 0; t + 1 < p.length; t++) { const k = p[t] + "\u0000" + p[t + 1]; pary.set(k, (pary.get(k) || 0) + wagi[w]); } });
+  let naj = null, ile = 1;
+  for (const [k, v] of pary) if (v > ile) { naj = k; ile = v; }
+  if (!naj) break;
+  const [a, b] = naj.split("\u0000");
+  SCALENIA.push([a, b]); slownik.set(a + b, slownik.size);
+  podzialy = podzialy.map(p => { const q = []; for (let t = 0; t < p.length; t++) { if (t + 1 < p.length && p[t] === a && p[t + 1] === b) { q.push(a + b); t++; } else q.push(p[t]); } return q; });
+}
+document.getElementById("ileScal").max = SCALENIA.length;
+function tokenizuj(tekst, ile) {
+  const wynik = [];
+  for (const s of tekst.split(/(\s+)/).filter(x => x && !/^\s+$/.test(x))) {
+    let p = [...(BAZA + s.toLowerCase())];
+    for (let m = 0; m < ile; m++) {
+      const [a, b] = SCALENIA[m]; const q = [];
+      for (let t = 0; t < p.length; t++) { if (t + 1 < p.length && p[t] === a && p[t + 1] === b) { q.push(a + b); t++; } else q.push(p[t]); }
+      p = q;
+    }
+    wynik.push(...p);
+  }
+  return wynik;
+}
+const kolory = ["#f6e3e6", "#e6edf4", "#e5f1e6", "#fbf0d4", "#ece6f4", "#e0f0f0"];
+function tokenyOdswiez() {
+  const ile = +document.getElementById("ileScal").value, tekst = document.getElementById("wpis").value;
+  document.getElementById("oScal").textContent = ile;
+  const t = tokenizuj(tekst, ile);
+  document.getElementById("nZn").textContent = tekst.replace(/\s+/g, " ").trim().length;
+  document.getElementById("nTok").textContent = t.length;
+  const el = document.getElementById("tokeny"); el.innerHTML = "";
+  t.forEach((tok, k) => {
+    const s = document.createElement("span"); s.className = "tok"; s.style.background = kolory[k % kolory.length];
+    s.textContent = tok; const id = document.createElement("small");
+    id.textContent = slownik.has(tok) ? slownik.get(tok) : "?"; s.appendChild(id); el.appendChild(s);
+  });
+  document.getElementById("scalenia").textContent = ile
+    ? "Pierwsze sklejenia, których nauczył się tokenizer: " + SCALENIA.slice(0, Math.min(ile, 14)).map(([a, b]) => `${a}+${b}`).join(", ") + (ile > 14 ? ", …" : "")
+    : "Bez sklejeń: każdy znak to osobny token.";
+}
+document.getElementById("ileScal").addEventListener("input", tokenyOdswiez);
+document.getElementById("wpis").addEventListener("input", tokenyOdswiez);
+tokenyOdswiez();
+
+// ================= KROK 4: graf wiedzy =================
+const WEZLY = { wisla: ["Wisła", 110, 230], warszawa: ["Warszawa", 110, 70], polska: ["Polska", 360, 70], ue: ["Unia Europejska", 610, 70], niemcy: ["Niemcy", 360, 230], berlin: ["Berlin", 610, 230] };
+const KRAW = [["warszawa", "polska", "jest stolicą"], ["polska", "ue", "należy do"], ["wisla", "warszawa", "przepływa przez"], ["polska", "niemcy", "graniczy z"], ["berlin", "niemcy", "jest stolicą"], ["niemcy", "ue", "należy do"]];
+const PYT = [
+  { q: "Jaka rzeka płynie przez stolicę Polski?", s: [["polska", null, "Zaczynamy od węzła „Polska”."], ["warszawa", 0, "Idziemy krawędzią „jest stolicą” w przeciwną stronę: stolicą Polski jest Warszawa."], ["wisla", 2, "Szukamy krawędzi „przepływa przez” prowadzącej do Warszawy: to Wisła. Odpowiedź: Wisła."]] },
+  { q: "Do jakiej organizacji należy kraj, którego stolicą jest Warszawa?", s: [["warszawa", null, "Zaczynamy od węzła „Warszawa”."], ["polska", 0, "Krawędź „jest stolicą” prowadzi do Polski."], ["ue", 1, "Krawędź „należy do” prowadzi do Unii Europejskiej. Odpowiedź: Unia Europejska."]] },
+  { q: "Jaka jest stolica kraju, z którym graniczy Polska?", s: [["polska", null, "Zaczynamy od węzła „Polska”."], ["niemcy", 3, "Krawędź „graniczy z” prowadzi do Niemiec (w tym małym grafie to jedyny sąsiad)."], ["berlin", 4, "Szukamy krawędzi „jest stolicą” prowadzącej do Niemiec: Berlin. Odpowiedź: Berlin."]] },
+];
+const sel = document.getElementById("pytanie");
+PYT.forEach((p, k) => sel.add(new Option(p.q, k)));
+let gKrok = 0;
+function rysujGraf() {
+  const p = PYT[+sel.value], aktW = new Set(), aktK = new Set();
+  p.s.slice(0, gKrok + 1).forEach(([w, k]) => { aktW.add(w); if (k !== null) aktK.add(k); });
+  let h = `<defs><marker id="gr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9aa0a8"/></marker><marker id="gra" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${C.akcent}"/></marker></defs>`;
+  KRAW.forEach(([a, b, et], k) => {
+    const [, x1, y1] = WEZLY[a], [, x2, y2] = WEZLY[b], dx = x2 - x1, dy = y2 - y1, d = Math.hypot(dx, dy);
+    const sx = x1 + dx / d * 62, sy = y1 + dy / d * 24, ex = x2 - dx / d * 62, ey = y2 - dy / d * 24, akt = aktK.has(k);
+    h += `<line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="${akt ? C.akcent : "#9aa0a8"}" stroke-width="${akt ? 3.5 : 1.6}" marker-end="url(#${akt ? "gra" : "gr"})"/>`;
+    h += `<text x="${(x1 + x2) / 2 + (dx === 0 ? 8 : 0)}" y="${(y1 + y2) / 2 - (dx === 0 ? 0 : 8)}" font-size="14" fill="${akt ? C.akcent : C.szary}" font-style="italic" text-anchor="${dx === 0 ? "start" : "middle"}">${et}</text>`;
+  });
+  for (const [id, [et, x, y]] of Object.entries(WEZLY)) {
+    const akt = aktW.has(id), w = Math.max(96, et.length * 9.5 + 24);
+    h += `<rect x="${x - w / 2}" y="${y - 20}" width="${w}" height="40" rx="20" fill="${akt ? "#f6e3e6" : "#e6edf4"}" stroke="${akt ? C.akcent : C.granat}" stroke-width="${akt ? 2.5 : 1.2}"/>`;
+    h += `<text x="${x}" y="${y + 5}" font-size="16" font-weight="600" text-anchor="middle" fill="#1d1f23">${et}</text>`;
+  }
+  document.getElementById("svg").innerHTML = h;
+  document.getElementById("grafKrok").innerHTML = `<p><strong>Krok ${gKrok + 1} z ${p.s.length}:</strong> ${p.s[gKrok][2]}</p>`;
+  document.getElementById("dalejG").disabled = gKrok >= p.s.length - 1;
+}
+sel.onchange = () => { gKrok = 0; rysujGraf(); };
+document.getElementById("dalejG").onclick = () => { gKrok++; rysujGraf(); };
+document.getElementById("resetG").onclick = () => { gKrok = 0; rysujGraf(); };
+rysujGraf();
+</script>
+</body>
+</html>

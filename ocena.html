@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jak oceniać twierdzenia o AI</title>
+<meta name="description" content="Interaktywny materiał do wykładu: pięć pytań, czerwone flagi, hierarchia źródeł i sprawdzanie cytowań.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .pytania { counter-reset: p; }
+  .pytania .karta h3::before { counter-increment: p; content: counter(p) ". "; color: var(--akcent); }
+  .przypadek { border: 1px solid var(--linia); border-radius: 6px; padding: 1rem; margin: 1.1rem 0; }
+  .naglowek { font-size: 1.3rem; font-weight: 700; line-height: 1.3; padding: 0.7rem 0.9rem; background: var(--tlo2); border-left: 5px solid var(--akcent); border-radius: 3px; }
+  .naglowek small { display: block; font-size: 0.75rem; font-weight: 500; color: var(--szary); margin-top: 0.25rem; }
+  .fakty { font-size: 0.95rem; }
+  .flagi { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.3rem 1rem; margin: 0.6rem 0; }
+  .flagi label { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.93rem; padding: 0.25rem 0.4rem; border-radius: 4px; cursor: pointer; }
+  .flagi input { margin-top: 0.3rem; accent-color: var(--akcent); }
+  .flagi label.trafione { background: #e5f1e6; }
+  .flagi label.pominiete { background: #fbf0d4; }
+  .flagi label.zbedne { background: var(--akcent-jasny); }
+  .komentarz { display: none; font-size: 0.95rem; } .komentarz.widoczny { display: block; }
+  .zrodla-lista { display: grid; gap: 0.4rem; margin: 0.6rem 0; }
+  .zrodla-lista button { text-align: left; display: flex; gap: 0.6rem; align-items: center; }
+  .zrodla-lista button .poz { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--tlo2); font-weight: 700; flex: none; }
+  .zrodla-lista button:disabled { opacity: 1; cursor: default; }
+  .zrodla-lista button.wybrany .poz { background: var(--granat); color: #fff; }
+  .cyt { font-size: 0.95rem; padding: 0.6rem 0.8rem; border: 1px solid var(--linia); border-radius: 5px; margin: 0.5rem 0; display: flex; gap: 0.7rem; align-items: flex-start; }
+  .cyt button { flex: none; font-size: 0.85rem; padding: 0.25rem 0.6rem; }
+  .cyt.dobrze { background: #e5f1e6; border-color: var(--zielony); }
+  .cyt.zle { background: var(--akcent-jasny); border-color: var(--czerwony); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="marka" href="index.html">Kompetencje akademickie · AI</a>
+  <a href="reprezentacja.html">Reprezentacja</a>
+  <a href="uczenie.html">Uczenie</a>
+  <a href="pulapki.html">Pułapki</a>
+  <a href="ai-w-nauce.html">AI w nauce</a>
+</nav>
+
+<header class="dzial">
+  <div class="wnetrze">
+    <div class="numer">6</div>
+    <h1>Jak oceniać twierdzenia o AI</h1>
+    <p>Pięć pytań, osiem czerwonych flag i jedno ćwiczenie ze zmyślonym cytatem. Narzędzia, które przydadzą Ci się przy każdej pracy naukowej — nie tylko o AI.</p>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================================================ -->
+<section id="piec">
+  <h2><span class="krok">Krok 1</span>Pięć pytań do każdej pracy i każdego nagłówka</h2>
+  <div class="karty pytania">
+    <div class="karta"><h3>Twierdzenie</h3><p>Co dokładnie twierdzą autorzy? Czy nagłówek mówi to samo?</p></div>
+    <div class="karta"><h3>Dane</h3><p>Skąd pochodzą? Ile ich jest? Czy dane testowe są naprawdę oddzielone od treningowych?</p></div>
+    <div class="karta"><h3>Punkt odniesienia</h3><p>W porównaniu z czym? Z prostym modelem, z człowiekiem, z losowaniem?</p></div>
+    <div class="karta"><h3>Miara</h3><p>Trafność, czułość, precyzja…? Czy pasuje do problemu?</p></div>
+    <div class="karta"><h3>Ablacje i powtórzenia</h3><p>Co się dzieje, gdy usuniemy jeden element? Przy innym losowaniu? Na innych danych?</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="przypadki">
+  <h2><span class="krok">Krok 2</span>Znajdź czerwone flagi</h2>
+  <p>Przy każdym przypadku zaznacz flagi, które widzisz, i kliknij „Sprawdź”. Nagłówki są <strong>przykładowe</strong> — tak mogłyby wyglądać w mediach. Opisy badań są prawdziwe, z wyjątkiem przypadku oznaczonego jako fikcyjny.</p>
+  <div id="przyp"></div>
+</section>
+
+<!-- ============================================================ -->
+<section id="hierarchia">
+  <h2><span class="krok">Krok 3</span>Ile kontroli przeszło to twierdzenie?</h2>
+  <p>Ułóż źródła od tego, które przeszło <strong>najwięcej</strong> niezależnej kontroli, do tego, które przeszło <strong>najmniej</strong>. Klikaj po kolei.</p>
+  <div class="panel">
+    <div class="zrodla-lista" id="zrodla"></div>
+    <div class="przyciski"><button id="zrodlaReset">Od nowa</button></div>
+    <div id="komZr" class="komunikat"></div>
+  </div>
+  <details>
+    <summary>Czy recenzowana praca zawsze jest wiarygodna?</summary>
+    <div class="odp"><p>Nie. Recenzja to kontrola, nie gwarancja — prace z wyciekiem danych (zobacz <a href="pulapki.html">materiał 5</a>) przechodziły recenzję w dobrych czasopismach. A preprint może być znakomity. Hierarchia mówi, <strong>ile niezależnych osób sprawdziło</strong> twierdzenie, zanim do Ciebie dotarło — i jak ostrożnie je traktować.</p></div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section id="cytaty">
+  <h2><span class="krok">Krok 4</span>Która pozycja jest zmyślona?</h2>
+  <p>Poprosiliśmy o literaturę na temat wiarygodności modeli AI i dostaliśmy trzy pozycje. <strong>Jedną z nich wymyśliliśmy celowo na potrzeby tego ćwiczenia.</strong> Która to? Zanim klikniesz — spróbuj ją sprawdzić w wyszukiwarce.</p>
+  <div class="panel" id="cytLista"></div>
+  <div id="komCyt" class="komunikat"></div>
+  <div class="ramka">
+    <span class="tytul">Jak sprawdzić pozycję bibliograficzną w 2 minuty</span>
+    <ol>
+      <li>Jeśli ma <strong>DOI</strong> — wklej go po adresie <code>https://doi.org/</code>. Musi otworzyć się strona wydawcy z <strong>tym samym</strong> tytułem i autorami.</li>
+      <li>Wyszukaj <strong>dokładny tytuł</strong> w cudzysłowie w Google Scholar.</li>
+      <li>Sprawdź, czy <strong>czasopismo istnieje</strong> i czy w podanym tomie jest ten artykuł.</li>
+      <li>Jeśli cytujesz konkretne twierdzenie — otwórz pracę i znajdź je w tekście. Model potrafi przypisać prawdziwej pracy coś, czego w niej nie ma.</li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer>dr inż. Paweł Róg · Uniwersytet SWPS · materiał do wykładu „AI to informatyka w działaniu”</footer>
+
+<script>
+"use strict";
+// ================= KROK 2: przypadki =================
+const FLAGI = [
+  "Wynik tylko na danych, na których model był rozwijany (albo wyciek danych)",
+  "Brak punktu odniesienia albo słaby punkt odniesienia",
+  "Sama trafność przy rzadkim zjawisku",
+  "Wybrane przykłady zamiast statystyk",
+  "Mała próba albo jeden przebieg, bez rozrzutu wyników",
+  "Słowa „rozumie”, „myśli”, „niszczy” bez definicji",
+  "Nagłówek mocniejszy niż wnioski samej pracy",
+  "Źródło nie przeszło recenzji",
+];
+const PRZYPADKI = [
+  {
+    n: "„ChatGPT niszczy mózg. Naukowcy z MIT mają dowody”",
+    f: `<p>Preprint w serwisie arXiv (2025): Kosmyna i in., „Your Brain on ChatGPT”. Uczestnicy pisali eseje w trzech grupach: z modelem językowym, z wyszukiwarką albo bez narzędzi; mierzono aktywność mózgu (EEG). W sesjach 1–3 brały udział <strong>54 osoby</strong>, w sesji 4, na której opierają się wnioski o „długu poznawczym”, tylko <strong>18 osób</strong>.</p>`,
+    ok: [4, 5, 6, 7],
+    k: "Praca mówi o mniejszym zaangażowaniu poznawczym (łączność EEG) w jednym typie zadania, a nie o „niszczeniu mózgu”. Najmocniejszy wniosek oparty jest na 18 osobach, a praca nie przeszła recenzji. To nie znaczy, że jest zła — znaczy, że nagłówek idzie dużo dalej niż dane.",
+    zr: "arXiv:2506.08872",
+  },
+  {
+    n: "„Sztuczna inteligencja szkodzi uczniom!”",
+    f: `<p>Artykuł w recenzowanym czasopiśmie <em>PNAS</em> (2025): Bastani i in. Ok. <strong>1000 licealistów</strong>, eksperyment z <strong>grupą kontrolną</strong>. Uczniowie z GPT-4 bez ograniczeń lepiej rozwiązywali ćwiczenia (+48%), ale gorzej wypadli na egzaminie bez AI (−17%). Wersja „tutor”, która podpowiadała zamiast dawać gotowe odpowiedzi, takiego spadku nie powodowała.</p>`,
+    ok: [6],
+    k: "To mocne badanie: recenzja, duża próba, grupa kontrolna, porównanie dwóch wersji narzędzia. Problemem jest tylko nagłówek — zgubił najciekawszy wynik: AI użyte jako tutor nie szkodziło. Brak czerwonych flag w badaniu nie oznacza, że każdy nagłówek o nim jest prawdziwy.",
+    zr: "doi:10.1073/pnas.2422633122",
+  },
+  {
+    n: "„Uczenie maszynowe przewiduje wojny domowe dużo lepiej niż tradycyjne metody”",
+    f: `<p>Kilka prac w czołowych czasopismach politologicznych twierdziło, że złożone modele (np. lasy losowe) przewidują wybuch wojny domowej wyraźnie lepiej niż klasyczna regresja logistyczna. Kapoor i Narayanan (<em>Patterns</em>, 2023) powtórzyli te analizy i znaleźli w nich <strong>wycieki danych</strong> — informacja z danych testowych przedostawała się do treningu. Po poprawieniu błędów przewaga złożonych modeli praktycznie zniknęła.</p>`,
+    ok: [0],
+    k: "Punkt odniesienia był (regresja logistyczna), prace przeszły recenzję — a mimo to wynik był błędny przez wyciek danych. To przykład, dlaczego pytanie „czy test jest naprawdę oddzielony od treningu?” jest tak ważne.",
+    zr: "doi:10.1016/j.patter.2023.100804",
+  },
+  {
+    n: "„Nowa aplikacja wykrywa rzadką chorobę skóry z 99% trafnością”",
+    f: `<p><strong>Przypadek fikcyjny.</strong> Wpis na blogu firmy, która sprzedaje aplikację. Choroba dotyczy ok. 1 na 100 badanych. Model testowano na zdjęciach z tej samej kliniki, z której pochodziły zdjęcia treningowe. Podano tylko trafność. Wpis ilustruje pięć zdjęć, które aplikacja rozpoznała poprawnie. Nie porównano wyników z oceną lekarzy.</p>`,
+    ok: [0, 1, 2, 3, 7],
+    k: "Prawie wszystko naraz: rzadka choroba i sama trafność (model „zawsze zdrowy” też ma 99%), test na danych z tego samego źródła, brak porównania z lekarzami, pięć wybranych przykładów i blog firmy zamiast recenzowanej pracy. Takie twierdzenie nie mówi praktycznie nic.",
+    zr: "",
+  },
+];
+const kont = document.getElementById("przyp");
+PRZYPADKI.forEach((c, i) => {
+  const el = document.createElement("div"); el.className = "przypadek";
+  el.innerHTML = `<div class="naglowek">${c.n}<small>przykładowy nagłówek</small></div>
+    <div class="fakty">${c.f}${c.zr ? `<p class="maly">Źródło: ${c.zr}</p>` : ""}</div>
+    <div class="flagi">${FLAGI.map((f, k) => `<label><input type="checkbox" value="${k}"><span>${f}</span></label>`).join("")}</div>
+    <div class="przyciski"><button class="glowny">Sprawdź</button></div>
+    <div class="komentarz"></div>`;
+  const btn = el.querySelector("button"), kom = el.querySelector(".komentarz");
+  btn.onclick = () => {
+    const zazn = new Set([...el.querySelectorAll("input:checked")].map(x => +x.value)), ok = new Set(c.ok);
+    let traf = 0, pom = 0, zb = 0;
+    el.querySelectorAll("label").forEach((l, k) => {
+      l.classList.remove("trafione", "pominiete", "zbedne");
+      if (zazn.has(k) && ok.has(k)) { l.classList.add("trafione"); traf++; }
+      else if (!zazn.has(k) && ok.has(k)) { l.classList.add("pominiete"); pom++; }
+      else if (zazn.has(k) && !ok.has(k)) { l.classList.add("zbedne"); zb++; }
+    });
+    const ocena = pom === 0 && zb === 0 ? "Dokładnie tak." : `Trafione: ${traf}, pominięte: ${pom} (żółte), nadmiarowe: ${zb} (różowe).`;
+    kom.innerHTML = `<p><strong>${ocena}</strong> ${c.k}</p>`; kom.classList.add("widoczny");
+  };
+  kont.appendChild(el);
+});
+
+// ================= KROK 3: hierarchia =================
+const ZRODLA = [
+  "Recenzowana praca w czasopiśmie lub na konferencji",
+  "Preprint (np. arXiv) — bez recenzji",
+  "Blog lub raport firmy, która sprzedaje produkt",
+  "Artykuł prasowy o badaniu",
+  "Post w mediach społecznościowych",
+];
+const kolej = [3, 0, 4, 2, 1];   // stała, pomieszana kolejność wyświetlania
+let wybrane = [];
+const zEl = document.getElementById("zrodla");
+function krok3() {
+  zEl.innerHTML = "";
+  kolej.forEach(k => {
+    const b = document.createElement("button"), poz = wybrane.indexOf(k);
+    b.innerHTML = `<span class="poz">${poz >= 0 ? poz + 1 : ""}</span><span>${ZRODLA[k]}</span>`;
+    if (poz >= 0) { b.classList.add("wybrany"); b.disabled = true; }
+    b.onclick = () => { wybrane.push(k); krok3(); };
+    zEl.appendChild(b);
+  });
+  const kom = document.getElementById("komZr");
+  if (wybrane.length < ZRODLA.length) { kom.textContent = ""; kom.className = "komunikat"; return; }
+  const dobrze = wybrane.every((k, i) => k === i);
+  if (dobrze) { kom.textContent = "Dobrze. Każdy kolejny szczebel to mniej niezależnej kontroli i często więcej uproszczeń."; kom.className = "komunikat ok"; }
+  else {
+    // blog firmy i artykuł prasowy można uzasadnić w obu kolejnościach
+    const alt = [0, 1, 3, 2, 4];
+    if (wybrane.every((k, i) => k === alt[i])) { kom.textContent = "Można bronić tej kolejności: artykuł prasowy bywa rzetelny, a blog firmy bywa szczegółowy. Zwykle jednak stawiamy blog wyżej, bo pochodzi bezpośrednio od autorów — pamiętając, że są stroną zainteresowaną."; kom.className = "komunikat ok"; }
+    else { kom.textContent = "Nie całkiem. Właściwa kolejność: recenzowana praca, preprint, blog lub raport firmy, artykuł prasowy, post w mediach społecznościowych."; kom.className = "komunikat zle"; }
+  }
+}
+document.getElementById("zrodlaReset").onclick = () => { wybrane = []; krok3(); };
+krok3();
+
+// ================= KROK 4: cytowania =================
+const CYT = [
+  { t: "Kapoor, S., Narayanan, A. (2023). Leakage and the reproducibility crisis in machine-learning-based science. <em>Patterns</em>, 100804. doi:10.1016/j.patter.2023.100804", z: false,
+    w: "Prawdziwa. DOI prowadzi na stronę czasopisma <em>Patterns</em> (Cell Press) z tym tytułem i autorami." },
+  { t: "Kowalczyk, M., Brandt, L. (2024). Large language models reliably detect their own hallucinations. <em>Journal of Machine Cognition</em>, 12(4), 233–251.", z: true,
+    w: "Zmyślona — wymyśliliśmy ją na potrzeby ćwiczenia. Nie ma DOI, tytułu nie znajdziesz w Google Scholar, a o czasopiśmie nic nie wiadomo. Zwróć uwagę, jak wiarygodnie wygląda: nazwiska, tom, strony. Dokładnie tak wyglądają cytowania zmyślone przez modele językowe." },
+  { t: "Goodfellow, I. J., Shlens, J., Szegedy, C. (2015). Explaining and harnessing adversarial examples. <em>ICLR 2015</em>. arXiv:1412.6572", z: false,
+    w: "Prawdziwa. Praca jest dostępna w serwisie arXiv pod podanym numerem i była prezentowana na konferencji ICLR 2015." },
+];
+const cEl = document.getElementById("cytLista");
+CYT.forEach(c => {
+  const d = document.createElement("div"); d.className = "cyt";
+  d.innerHTML = `<button>To zmyślone</button><div><div>${c.t}</div><div class="maly wyj" style="display:none;margin-top:0.3rem"></div></div>`;
+  d.querySelector("button").onclick = () => {
+    cEl.querySelectorAll(".cyt").forEach((x, k) => {
+      x.querySelector("button").disabled = true; const w = x.querySelector(".wyj");
+      w.innerHTML = CYT[k].w; w.style.display = "block"; if (CYT[k].z) x.classList.add("dobrze");
+    });
+    if (!c.z) d.classList.add("zle");
+    const kom = document.getElementById("komCyt");
+    kom.textContent = c.z ? "Tak, to ta." : "Nie — ta pozycja istnieje. Zmyślona jest zaznaczona na zielono.";
+    kom.className = "komunikat " + (c.z ? "ok" : "zle");
+  };
+  cEl.appendChild(d);
+});
+</script>
+</body>
+</html>

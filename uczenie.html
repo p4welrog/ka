@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uczenie to optymalizacja</title>
+<meta name="description" content="Interaktywny materiał do wykładu: jak model uczy się, schodząc w dół funkcji błędu.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .wzor { font-family: var(--mono); background: var(--tlo2); padding: 0.15em 0.4em; border-radius: 3px; }
+  .legenda { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.82rem; color: var(--szary); justify-content: center; margin-top: 0.3rem; }
+  .legenda span::before { content: ""; display: inline-block; width: 0.8em; height: 0.8em; margin-right: 0.35em; vertical-align: -0.05em; border-radius: 2px; background: var(--k); }
+  .presety { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .presety button { padding: 0.25rem 0.6rem; font-size: 0.88rem; }
+  .kalk { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.5rem 0.8rem; align-items: center; max-width: 560px; }
+  .kalk input { width: 100%; max-width: 14rem; }
+  .kalk select { font: inherit; padding: 0.3rem; border-radius: 4px; border: 1.5px solid var(--linia); width: 100%; max-width: 100%; }
+  @media (max-width: 560px) { .kalk { grid-template-columns: 1fr; gap: 0.2rem; } .kalk label { margin-top: 0.4rem; } }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="marka" href="index.html">Kompetencje akademickie · AI</a>
+  <a href="index.html">Wszystkie materiały</a>
+  <a href="ai-w-nauce.html">AI w Twojej nauce</a>
+</nav>
+
+<header class="dzial">
+  <div class="wnetrze">
+    <div class="numer">3</div>
+    <h1>Uczenie to optymalizacja</h1>
+    <p>„Uczenie się” modelu to szukanie takich liczb, przy których model myli się najmniej. Najpierw zrobisz to sam, potem zobaczysz, jak robi to komputer.</p>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================================================ -->
+<section id="sam">
+  <h2><span class="krok">Krok 1</span>Bądź optymalizatorem</h2>
+  <p>Mamy 50 punktów pomiarowych. Model to prosta <span class="wzor">ŷ = a·x + b</span> — ma tylko <strong>dwa parametry</strong>: nachylenie <code>a</code> i przesunięcie <code>b</code>. Przesuwaj suwaki tak, żeby prosta jak najlepiej pasowała do punktów.</p>
+
+  <div class="panel">
+    <div class="uklad">
+      <div>
+        <canvas id="c1" width="440" height="330" aria-label="Wykres punktów i prostej"></canvas>
+        <div class="legenda"><span style="--k:#1f4e79">dane</span><span style="--k:#b5162b">Twoja prosta</span><span style="--k:#f0b4bd">błędy</span></div>
+      </div>
+      <div>
+        <div class="suwak"><label for="sa">a</label><input id="sa" type="range" min="-1" max="4" step="0.01" value="0.5"><output id="oa">0.50</output></div>
+        <div class="suwak"><label for="sb">b</label><input id="sb" type="range" min="-1" max="3" step="0.01" value="0.5"><output id="ob">0.50</output></div>
+        <div class="liczniki">
+          <div class="licznik duzy">błąd (MSE)<b id="mse1">–</b></div>
+          <div class="licznik">Twój najlepszy wynik<b id="rek1">–</b></div>
+        </div>
+        <div id="kom1" class="komunikat"></div>
+        <div class="przyciski">
+          <button id="pokazNajlepsza">Pokaż najlepszą możliwą prostą</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ramka">
+    <span class="tytul">Co to jest „błąd”?</span>
+    <p>Dla każdego punktu liczymy, o ile prosta chybia (różowe odcinki), podnosimy to do kwadratu i bierzemy średnią. To <strong>błąd średniokwadratowy</strong> (MSE, <em>mean squared error</em>). Im mniejszy, tym lepiej model pasuje do danych.</p>
+  </div>
+
+  <details>
+    <summary>Dlaczego kwadraty, a nie po prostu odległości?</summary>
+    <div class="odp"><p>Bo chybienia w górę i w dół by się znosiły (+0,3 i −0,3 dają 0). Kwadrat zawsze jest dodatni i dodatkowo mocniej karze duże pomyłki. Ma też praktyczną zaletę: łatwo go różniczkować, co przyda się w kroku 2.</p></div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section id="komputer">
+  <h2><span class="krok">Krok 2</span>Niech zrobi to komputer</h2>
+  <p>Każda para <code>(a, b)</code> daje jakiś błąd. Można to narysować jak <strong>mapę terenu</strong>: każdy punkt mapy to jedna prosta, a „wysokość” to jej błąd. Najlepsza prosta leży na dnie doliny (gwiazdka).</p>
+  <p>Komputer nie widzi całej mapy. W miejscu, w którym stoi, zna tylko <strong>nachylenie terenu</strong> (gradient) i robi mały krok w dół. Potem znowu. To jest <strong>spadek gradientu</strong> — cały „trening”.</p>
+
+  <div class="panel">
+    <div class="uklad">
+      <div>
+        <canvas id="c2a" width="440" height="330" aria-label="Wykres punktów i bieżącej prostej"></canvas>
+        <div class="podpis">dane i prosta po kolejnych krokach</div>
+      </div>
+      <div>
+        <canvas id="c2b" width="440" height="330" aria-label="Mapa błędu w zależności od a i b ze ścieżką uczenia"></canvas>
+        <div class="podpis">mapa błędu: oś pozioma — a, oś pionowa — b. Ciemniej = większy błąd</div>
+      </div>
+    </div>
+    <div class="przyciski">
+      <button class="glowny" id="k1">1 krok</button>
+      <button id="k10">10 kroków</button>
+      <button id="kAnim">Animuj do 200 kroków</button>
+      <button id="kReset">Od nowa z (0, 0)</button>
+      <button id="kMoja">Zacznij od mojej prostej z kroku 1</button>
+    </div>
+    <div class="liczniki">
+      <div class="licznik">krok<b id="n2">0</b></div>
+      <div class="licznik">a<b id="a2">0.00</b></div>
+      <div class="licznik">b<b id="b2">0.00</b></div>
+      <div class="licznik duzy">błąd (MSE)<b id="l2">–</b></div>
+    </div>
+    <canvas id="c2c" width="900" height="170" aria-label="Wykres błędu w kolejnych krokach"></canvas>
+    <div class="podpis">błąd w kolejnych krokach (skala logarytmiczna)</div>
+  </div>
+
+  <div class="ramka">
+    <span class="tytul">Krok w dół</span>
+    <p>W każdym kroku: <span class="wzor">a ← a − η · (nachylenie w kierunku a)</span>, i tak samo dla <code>b</code>. Liczba <strong>η</strong> (eta) to długość kroku. Strzałka na mapie pokazuje kierunek, w którym komputer zaraz pójdzie.</p>
+  </div>
+
+  <details>
+    <summary>Tak wygląda to w kodzie (Python)</summary>
+    <div class="odp">
+<pre><code>import numpy as np
+rng = np.random.default_rng(0)
+x = rng.uniform(0, 1, 50)
+y = 2 * x + 1 + rng.normal(0, 0.1, 50)   # dane z „prawdziwej” prostej + szum
+
+a, b, eta = 0.0, 0.0, 0.5
+for epoka in range(201):
+    blad = a * x + b - y
+    strata = np.mean(blad ** 2)          # MSE
+    a -= eta * 2 * np.mean(blad * x)     # krok w dół: nachylenie względem a
+    b -= eta * 2 * np.mean(blad)         # krok w dół: nachylenie względem b</code></pre>
+      <p>To ten sam kod, co na wykładzie, i te same dane: strona używa dokładnie tych 50 punktów. Dwie ostatnie linie pętli to całe „uczenie”.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section id="eta">
+  <h2><span class="krok">Krok 3</span>Za mały i za duży krok</h2>
+  <p>Długość kroku <strong>η</strong> wybiera człowiek. Zmieniaj ją i obserwuj 50 kroków uczenia, zawsze od <code>(0, 0)</code>.</p>
+
+  <div class="panel">
+    <div class="suwak"><label for="se">η</label><input id="se" type="range" min="0.01" max="1" step="0.01" value="0.5"><output id="oe">0.50</output></div>
+    <div class="presety"><span class="maly">Spróbuj:</span>
+      <button data-eta="0.05">0.05</button><button data-eta="0.3">0.3</button><button data-eta="0.5">0.5</button><button data-eta="0.7">0.7</button><button data-eta="0.75">0.75</button><button data-eta="0.8">0.8</button>
+    </div>
+    <div class="uklad" style="margin-top:0.8rem">
+      <div>
+        <canvas id="c3a" width="440" height="330" aria-label="Mapa błędu ze ścieżką dla wybranego eta"></canvas>
+        <div class="podpis">ścieżka 50 kroków na mapie błędu</div>
+      </div>
+      <div>
+        <canvas id="c3b" width="440" height="330" aria-label="Błąd w kolejnych krokach dla wybranego eta"></canvas>
+        <div class="podpis">błąd w kolejnych krokach (skala logarytmiczna)</div>
+      </div>
+    </div>
+    <div id="kom3" class="komunikat"></div>
+  </div>
+
+  <div class="ramka akcent">
+    <span class="tytul">Wyzwanie</span>
+    <p>Znajdź <strong>największe η</strong>, przy którym uczenie jeszcze nie „wybucha”. Podaj z dokładnością do 0,01.</p>
+    <div class="przyciski" style="align-items:center">
+      <input id="zgad" type="number" min="0" max="2" step="0.01" placeholder="np. 0.65" aria-label="Twoja odpowiedź">
+      <button class="glowny" id="sprawdz">Sprawdź</button>
+    </div>
+    <div id="kom3b" class="komunikat"></div>
+  </div>
+
+  <details>
+    <summary>Dlaczego za duży krok psuje uczenie?</summary>
+    <div class="odp">
+      <p>Dolina na mapie jest wąska i stroma w jednym kierunku. Za długi krok <strong>przeskakuje dno</strong> i ląduje na przeciwnym zboczu — wyżej niż przedtem. Stamtąd nachylenie jest jeszcze większe, więc następny skok jest jeszcze dłuższy. Błąd rośnie lawinowo.</p>
+      <p>Za mały krok też jest problemem: uczenie idzie w dobrą stronę, ale bardzo wolno. Przy η = 0,05 po 50 krokach model wciąż jest daleko od dna.</p>
+      <p class="maly">Dla zaawansowanych: dla błędu średniokwadratowego granica to η = 2/λ<sub>max</sub>, gdzie λ<sub>max</sub> to największa wartość własna macierzy drugich pochodnych błędu (hesjanu). Dla tych danych λ<sub>max</sub> ≈ 2,594, więc granica wynosi ok. 0,771.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section id="skala">
+  <h2><span class="krok">Krok 4</span>Ten sam przepis, inna skala</h2>
+  <p>Nasz model ma 2 parametry i 50 punktów — komputer liczy to w ułamku sekundy. Duże modele językowe uczą się <strong>dokładnie tym samym sposobem</strong>, tylko parametrów są miliardy, a danych biliony tokenów. Koszt treningu szacuje się wzorem <span class="wzor">C ≈ 6 · N · D</span> operacji.</p>
+
+  <div class="panel">
+    <div class="presety" style="margin-bottom:0.7rem"><span class="maly">Gotowe przykłady:</span>
+      <button id="pGpt3">GPT-3 (2020)</button>
+    </div>
+    <div class="kalk">
+      <label for="kN">N — parametry</label><input id="kN" type="text" value="175e9">
+      <label for="kD">D — tokeny treningowe</label><input id="kD" type="text" value="300e9">
+      <label for="kS">sprzęt</label>
+      <select id="kS">
+        <option value="1e12">laptop (ok. 10¹² operacji/s)</option>
+        <option value="1e15">jedna karta GPU do AI (ok. 10¹⁵ operacji/s)</option>
+        <option value="1e19">10 000 takich kart (ok. 10¹⁹ operacji/s)</option>
+      </select>
+    </div>
+    <div class="liczniki" style="margin-top:0.9rem">
+      <div class="licznik">operacji (C)<b id="kC">–</b></div>
+      <div class="licznik duzy">czas obliczeń<b id="kT">–</b></div>
+    </div>
+    <p class="maly">Wydajność sprzętu to rząd wielkości dla pracy z pełną wydajnością teoretyczną; w praktyce osiąga się zwykle jej część, więc trening trwa dłużej.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="pytania">
+  <h2>Sprawdź się</h2>
+  <details>
+    <summary>1. Dlaczego błąd nie spada do zera, nawet po 200 krokach?</summary>
+    <div class="odp"><p>Bo punkty mają <strong>szum</strong>: dane wygenerowano z prostej <code>y = 2x + 1</code> plus losowe zaburzenie o odchyleniu 0,1. Szumu nie da się przewidzieć, więc najmniejszy możliwy błąd to ok. 0,1² = 0,01. Model, który „dopasowałby się” także do szumu, byłby przeuczony — na nowych danych radziłby sobie gorzej.</p></div>
+  </details>
+  <details>
+    <summary>2. Model nie znał wzoru y = 2x + 1. Skąd „wie”, że a ≈ 2 i b ≈ 1?</summary>
+    <div class="odp"><p>Nie wie. Znalazł liczby, przy których błąd na tych 50 punktach jest najmniejszy: a ≈ 2,05, b ≈ 0,98. Wyszły blisko prawdziwych, bo danych było dość, a model miał właściwy kształt (prosta). Gdyby prawdziwa zależność była krzywą, najlepsza prosta też by się „nauczyła” — tylko gorzej.</p></div>
+  </details>
+  <details>
+    <summary>3. Dolina na mapie jest wydłużona. Co to oznacza dla uczenia?</summary>
+    <div class="odp"><p>W jednym kierunku teren jest stromy, w drugim prawie płaski. Krok dobrany do stromego kierunku jest za mały dla płaskiego — dlatego ścieżka najpierw szybko schodzi w dolinę, a potem długo „pełznie” jej dnem. Jednym z lekarstw jest standaryzacja danych (zobacz materiały poniżej).</p></div>
+  </details>
+  <details>
+    <summary>4. Czym różni się ten przykład od uczenia dużego modelu językowego?</summary>
+    <div class="odp"><p>Przepis jest ten sam: dane, model z parametrami, funkcja błędu, kroki w dół. Różnią się skala (miliardy parametrów zamiast dwóch), rodzaj błędu (zamiast odległości od prostej — jak mało prawdopodobny był prawdziwy następny token) i to, że pochodne liczy automatycznie biblioteka, a nie my ręcznie.</p></div>
+  </details>
+</section>
+
+<section id="dalej">
+  <h2>Chcesz więcej?</h2>
+  <div class="karty">
+    <a class="karta" href="https://p4welrog.github.io/puai/gradient.html">
+      <h3>Spadek gradientu — dokładniej</h3>
+      <p class="maly">Warianty wsadowy, stochastyczny i mini-wsadowy, wpływ standaryzacji. Z przedmiotu „Proces uczenia się w AI”.</p>
+    </a>
+    <a class="karta" href="https://p4welrog.github.io/puai/overfitting.html">
+      <h3>Przeuczenie</h3>
+      <p class="maly">Co się dzieje, gdy model jest zbyt elastyczny i uczy się szumu.</p>
+    </a>
+  </div>
+</section>
+
+</main>
+
+<footer>dr inż. Paweł Róg · Uniwersytet SWPS · materiał do wykładu „AI to informatyka w działaniu”</footer>
+
+<script>
+"use strict";
+// Dane: dokładnie te same 50 punktów co w demo.py (NumPy, seed 0), zaokrąglone do 4 miejsc.
+const X = [0.637,0.2698,0.041,0.0165,0.8133,0.9128,0.6066,0.7295,0.5436,0.9351,0.8159,0.0027,0.8574,0.0336,0.7297,0.1757,0.8632,0.5415,0.2997,0.4227,0.0283,0.1243,0.6706,0.6472,0.6154,0.3837,0.9972,0.9808,0.6855,0.6505,0.6884,0.3889,0.1351,0.7215,0.5254,0.3102,0.4858,0.8895,0.934,0.3578,0.5715,0.3219,0.5943,0.3379,0.3916,0.8903,0.2272,0.6232,0.084,0.8326];
+const Y = [2.3097,1.4187,1.0815,1.0987,2.4977,2.865,2.2563,2.5286,1.9688,2.804,2.5881,0.8885,2.8887,1.0176,2.4922,1.3255,2.8847,2.215,1.6628,1.625,1.0618,1.3169,2.4416,2.2326,2.413,1.6353,2.9283,3.0552,2.376,2.5012,2.3957,1.7145,1.2324,2.3339,1.9229,1.6835,2.0298,2.9084,2.7926,1.8845,2.1143,1.8012,2.1453,1.6023,1.8082,2.8837,1.4704,2.1878,1.0339,2.5251];
+const n = X.length;
+const mean = f => { let s = 0; for (let i = 0; i < n; i++) s += f(i); return s / n; };
+const Mx = mean(i => X[i]), My = mean(i => Y[i]), Mxx = mean(i => X[i] * X[i]),
+      Mxy = mean(i => X[i] * Y[i]), Myy = mean(i => Y[i] * Y[i]);
+const strata = (a, b) => a * a * Mxx + 2 * a * b * Mx + b * b - 2 * a * Mxy - 2 * b * My + Myy;
+const grad = (a, b) => [2 * (a * Mxx + b * Mx - Mxy), 2 * (a * Mx + b - My)];
+const bestA = (Mxy - Mx * My) / (Mxx - Mx * Mx), bestB = My - bestA * Mx, bestL = strata(bestA, bestB);
+const ETA_MAX = (() => { // 2 / największa wartość własna hesjanu
+  const p = 2 * Mxx, q = 2 * Mx, r = 2, tr = p + r, det = p * r - q * q;
+  return 2 / ((tr + Math.sqrt(tr * tr - 4 * det)) / 2);
+})();
+
+const C = { granat: "#1f4e79", akcent: "#b5162b", roz: "#f0b4bd", szary: "#6b7280", linia: "#d7dade", zielony: "#2e7d32" };
+const pl = v => String(v).replace(".", ",");
+const fmt = (v, d = 4) => (!isFinite(v) || Math.abs(v) > 1e6) ? (v > 0 ? "> 10⁶" : "–") : v.toFixed(d);
+
+// --- płótno z obsługą ekranów o dużej gęstości pikseli ---
+function plotno(id) {
+  const c = document.getElementById(id), W = c.width, H = c.height, r = window.devicePixelRatio || 1;
+  c.width = W * r; c.height = H * r;
+  const ctx = c.getContext("2d"); ctx.scale(r, r);
+  return { c, ctx, W, H, r };
+}
+
+// --- wykres punktów z prostą ---
+const M = { l: 38, r: 10, t: 10, b: 30 };
+function wykresDanych(p, a, b, { bledy = false, cien = null } = {}) {
+  const { ctx, W, H } = p, x0 = M.l, x1 = W - M.r, y0 = H - M.b, y1 = M.t;
+  const sx = v => x0 + v * (x1 - x0), sy = v => y0 - (v - 0.5) / 3 * (y0 - y1);
+  ctx.clearRect(0, 0, W, H);
+  ctx.strokeStyle = C.linia; ctx.lineWidth = 1; ctx.fillStyle = C.szary; ctx.font = "11px system-ui, sans-serif";
+  for (let v = 0.5; v <= 3.5; v += 0.5) { ctx.beginPath(); ctx.moveTo(x0, sy(v)); ctx.lineTo(x1, sy(v)); ctx.stroke(); ctx.fillText(v.toFixed(1), 6, sy(v) + 4); }
+  for (let v = 0; v <= 1.001; v += 0.25) ctx.fillText(v.toFixed(2), sx(v) - 12, H - 10);
+  ctx.save(); ctx.beginPath(); ctx.rect(x0, y1, x1 - x0, y0 - y1); ctx.clip();
+  if (bledy) {
+    ctx.strokeStyle = C.roz; ctx.lineWidth = 2;
+    for (let i = 0; i < n; i++) { ctx.beginPath(); ctx.moveTo(sx(X[i]), sy(Y[i])); ctx.lineTo(sx(X[i]), sy(a * X[i] + b)); ctx.stroke(); }
+  }
+  if (cien) { ctx.setLineDash([6, 5]); ctx.strokeStyle = C.zielony; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx(0), sy(cien[1])); ctx.lineTo(sx(1), sy(cien[0] + cien[1])); ctx.stroke(); ctx.setLineDash([]); }
+  ctx.fillStyle = C.granat;
+  for (let i = 0; i < n; i++) { ctx.beginPath(); ctx.arc(sx(X[i]), sy(Y[i]), 3.4, 0, 2 * Math.PI); ctx.fill(); }
+  ctx.strokeStyle = C.akcent; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(sx(0), sy(b)); ctx.lineTo(sx(1), sy(a + b)); ctx.stroke();
+  ctx.restore();
+}
+
+// --- mapa błędu L(a, b) ---
+const A0 = -1, A1 = 4, B0 = -1, B1 = 3;
+function mapa(p) {
+  const { ctx, W, H, r } = p, w = Math.round(W * r), h = Math.round(H * r);
+  const img = ctx.createImageData(w, h), lv = new Float32Array(w * h);
+  const Lmin = Math.log10(bestL), Lmax = Math.log10(strata(A0, B0) > strata(A1, B1) ? strata(A0, B0) : strata(A1, B1));
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const a = A0 + (i + 0.5) / w * (A1 - A0), b = B1 - (j + 0.5) / h * (B1 - B0);
+    lv[j * w + i] = (Math.log10(strata(a, b)) - Lmin) / (Lmax - Lmin);
+  }
+  const jasny = [255, 255, 255], ciemny = [31, 78, 121];
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const k = j * w + i, t = Math.max(0, Math.min(1, lv[k])), pas = Math.floor(t * 14);
+    const brzeg = (i + 1 < w && Math.floor(Math.max(0, Math.min(1, lv[k + 1])) * 14) !== pas) ||
+                  (j + 1 < h && Math.floor(Math.max(0, Math.min(1, lv[k + w])) * 14) !== pas);
+    const s = Math.pow(t, 0.9) * 0.85, m = brzeg ? 0.8 : 1;
+    for (let c = 0; c < 3; c++) img.data[4 * k + c] = (jasny[c] * (1 - s) + ciemny[c] * s) * m;
+    img.data[4 * k + 3] = 255;
+  }
+  return img;
+}
+const sa = (p, a) => (a - A0) / (A1 - A0) * p.W, sb = (p, b) => (B1 - b) / (B1 - B0) * p.H;
+function rysujMape(p, tlo, sciezka, { strzalka = false } = {}) {
+  const { ctx, W, H } = p;
+  ctx.putImageData(tlo, 0, 0);
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(p.r, p.r);
+  ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px system-ui, sans-serif";
+  ctx.fillText("a →", W - 30, H - 6); ctx.fillText("b ↑", 6, 14);
+  for (const a of [0, 1, 2, 3]) { ctx.fillStyle = "rgba(29,31,35,0.55)"; ctx.fillText(a, sa(p, a) - 3, H - 6); }
+  for (const b of [0, 1, 2]) { ctx.fillStyle = "rgba(29,31,35,0.55)"; ctx.fillText(b, 4, sb(p, b) + 4); }
+  // minimum
+  gwiazdka(ctx, sa(p, bestA), sb(p, bestB), 8, C.zielony);
+  ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+  if (sciezka.length) {
+    ctx.strokeStyle = C.akcent; ctx.lineWidth = 2; ctx.beginPath();
+    sciezka.forEach(([a, b], i) => { const x = sa(p, a), y = sb(p, b); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+    ctx.stroke(); ctx.fillStyle = C.akcent;
+    for (const [a, b] of sciezka) { ctx.beginPath(); ctx.arc(sa(p, a), sb(p, b), 2.6, 0, 2 * Math.PI); ctx.fill(); }
+    const [a, b] = sciezka[sciezka.length - 1];
+    ctx.beginPath(); ctx.arc(sa(p, a), sb(p, b), 6, 0, 2 * Math.PI); ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 3; ctx.stroke();
+    if (strzalka) {
+      const [ga, gb] = grad(a, b), dl = Math.hypot(ga, gb);
+      if (dl > 1e-3) {
+        const vx = -ga * W / (A1 - A0), vy = gb * H / (B1 - B0), dv = Math.hypot(vx, vy), x = sa(p, a), y = sb(p, b);
+        strz(ctx, x, y, x + vx / dv * 44, y + vy / dv * 44);
+      }
+    }
+  }
+  ctx.restore();
+}
+function strz(ctx, x, y, ex, ey) {
+  const k = Math.atan2(ey - y, ex - x);
+  for (const [kol, gr] of [["#fff", 6], ["#111", 2.5]]) {
+    ctx.strokeStyle = kol; ctx.fillStyle = kol; ctx.lineWidth = gr; ctx.lineJoin = "round";
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ex + Math.cos(k) * 3, ey + Math.sin(k) * 3); ctx.lineTo(ex - 11 * Math.cos(k - 0.45), ey - 11 * Math.sin(k - 0.45)); ctx.lineTo(ex - 11 * Math.cos(k + 0.45), ey - 11 * Math.sin(k + 0.45)); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+}
+function gwiazdka(ctx, x, y, R, kolor) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const r = i % 2 ? R * 0.45 : R, k = -Math.PI / 2 + i * Math.PI / 5; ctx.lineTo(x + r * Math.cos(k), y + r * Math.sin(k)); }
+  ctx.closePath(); ctx.fillStyle = kolor; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
+}
+
+// --- wykres błędu w skali logarytmicznej ---
+function wykresStraty(p, wart, maxKrokow) {
+  const { ctx, W, H } = p, x0 = 46, x1 = W - 10, y0 = H - 24, y1 = 8;
+  ctx.clearRect(0, 0, W, H);
+  const lo = -2.1, hi = 1;               // log10: od ~0,008 do 10
+  const sx = i => x0 + i / Math.max(1, maxKrokow) * (x1 - x0);
+  const sy = v => y0 - (Math.max(lo, Math.min(hi, Math.log10(v))) - lo) / (hi - lo) * (y0 - y1);
+  ctx.font = "11px system-ui, sans-serif"; ctx.fillStyle = C.szary; ctx.strokeStyle = C.linia; ctx.lineWidth = 1;
+  for (const e of [-2, -1, 0, 1]) { ctx.beginPath(); ctx.moveTo(x0, sy(10 ** e)); ctx.lineTo(x1, sy(10 ** e)); ctx.stroke(); ctx.fillText(String(10 ** e).replace(".", ","), 4, sy(10 ** e) + 4); }
+  ctx.fillText("krok " + maxKrokow, x1 - 50, H - 6); ctx.fillText("0", x0, H - 6);
+  ctx.setLineDash([4, 4]); ctx.strokeStyle = C.zielony; ctx.beginPath(); ctx.moveTo(x0, sy(bestL)); ctx.lineTo(x1, sy(bestL)); ctx.stroke(); ctx.setLineDash([]);
+  if (!wart.length) return;
+  ctx.strokeStyle = C.akcent; ctx.lineWidth = 2.2; ctx.beginPath();
+  wart.forEach((v, i) => { if (i) ctx.lineTo(sx(i), sy(v)); else ctx.moveTo(sx(i), sy(v)); });
+  ctx.stroke();
+}
+
+// ================= KROK 1 =================
+const p1 = plotno("c1");
+const s_a = document.getElementById("sa"), s_b = document.getElementById("sb");
+let rekord = Infinity, pokazano = false;
+function krok1() {
+  const a = +s_a.value, b = +s_b.value, L = strata(a, b);
+  document.getElementById("oa").textContent = a.toFixed(2);
+  document.getElementById("ob").textContent = b.toFixed(2);
+  document.getElementById("mse1").textContent = L.toFixed(4);
+  rekord = Math.min(rekord, L);
+  document.getElementById("rek1").textContent = rekord.toFixed(4);
+  wykresDanych(p1, a, b, { bledy: true, cien: pokazano ? [bestA, bestB] : null });
+  const k = document.getElementById("kom1");
+  if (L < bestL * 1.15) { k.textContent = "Świetnie! Lepiej się prawie nie da."; k.className = "komunikat ok"; }
+  else if (L < 0.05) { k.textContent = "Bardzo blisko — popraw jeszcze trochę."; k.className = "komunikat"; }
+  else { k.textContent = ""; k.className = "komunikat"; }
+}
+s_a.addEventListener("input", krok1); s_b.addEventListener("input", krok1);
+document.getElementById("pokazNajlepsza").addEventListener("click", e => {
+  pokazano = true; e.target.disabled = true;
+  e.target.textContent = `Najlepsza: a = ${bestA.toFixed(2)}, b = ${bestB.toFixed(2)}, błąd = ${bestL.toFixed(4)}`;
+  krok1();
+});
+krok1();
+
+// ================= KROK 2 =================
+const p2a = plotno("c2a"), p2b = plotno("c2b"), p2c = plotno("c2c");
+const tlo2 = mapa(p2b);
+let sc2 = [[0, 0]], anim = null;
+const ETA2 = 0.5;
+function rysuj2() {
+  const [a, b] = sc2[sc2.length - 1];
+  wykresDanych(p2a, a, b);
+  rysujMape(p2b, tlo2, sc2, { strzalka: true });
+  wykresStraty(p2c, sc2.map(([a, b]) => strata(a, b)), Math.max(50, sc2.length - 1));
+  document.getElementById("n2").textContent = sc2.length - 1;
+  document.getElementById("a2").textContent = a.toFixed(2);
+  document.getElementById("b2").textContent = b.toFixed(2);
+  document.getElementById("l2").textContent = strata(a, b).toFixed(4);
+}
+function krok(ile) {
+  for (let i = 0; i < ile; i++) {
+    const [a, b] = sc2[sc2.length - 1], [ga, gb] = grad(a, b);
+    sc2.push([a - ETA2 * ga, b - ETA2 * gb]);
+  }
+  rysuj2();
+}
+function stopAnim() { if (anim) { clearInterval(anim); anim = null; document.getElementById("kAnim").textContent = "Animuj do 200 kroków"; } }
+document.getElementById("k1").onclick = () => { stopAnim(); krok(1); };
+document.getElementById("k10").onclick = () => { stopAnim(); krok(10); };
+document.getElementById("kReset").onclick = () => { stopAnim(); sc2 = [[0, 0]]; rysuj2(); };
+document.getElementById("kMoja").onclick = () => { stopAnim(); sc2 = [[+s_a.value, +s_b.value]]; rysuj2(); };
+document.getElementById("kAnim").onclick = e => {
+  if (anim) return stopAnim();
+  e.target.textContent = "Zatrzymaj";
+  anim = setInterval(() => { if (sc2.length > 200) return stopAnim(); krok(1); }, 60);
+};
+rysuj2();
+
+// ================= KROK 3 =================
+const p3a = plotno("c3a"), p3b = plotno("c3b");
+const tlo3 = mapa(p3a), s_e = document.getElementById("se");
+function krok3() {
+  const eta = +s_e.value; document.getElementById("oe").textContent = eta.toFixed(2);
+  const sc = [[0, 0]];
+  for (let i = 0; i < 50; i++) {
+    const [a, b] = sc[sc.length - 1], [ga, gb] = grad(a, b);
+    const nowy = [a - eta * ga, b - eta * gb];
+    if (!isFinite(nowy[0]) || Math.abs(nowy[0]) > 1e8) break;
+    sc.push(nowy);
+  }
+  const L = sc.map(([a, b]) => strata(a, b)), ost = L[L.length - 1];
+  rysujMape(p3a, tlo3, sc);
+  wykresStraty(p3b, L, 50);
+  const k = document.getElementById("kom3");
+  if (ost > L[0]) { k.textContent = `η = ${pl(eta.toFixed(2))}: uczenie się rozbiega — błąd rośnie z każdym krokiem.`; k.className = "komunikat zle"; }
+  else if (ost < bestL * 1.05) { k.textContent = `η = ${pl(eta.toFixed(2))}: model dochodzi do dna doliny.`; k.className = "komunikat ok"; }
+  else if (eta < 0.2) { k.textContent = `η = ${pl(eta.toFixed(2))}: idzie w dobrą stronę, ale bardzo wolno — 50 kroków to za mało.`; k.className = "komunikat"; }
+  else { k.textContent = `η = ${pl(eta.toFixed(2))}: skacze z jednego zbocza na drugie — jeszcze się nie rozbiega, ale zbliża się powoli.`; k.className = "komunikat"; }
+}
+s_e.addEventListener("input", krok3);
+document.querySelectorAll("[data-eta]").forEach(bt => bt.onclick = () => { s_e.value = bt.dataset.eta; krok3(); });
+document.getElementById("sprawdz").onclick = () => {
+  const g = parseFloat(String(document.getElementById("zgad").value).replace(",", "."));
+  const k = document.getElementById("kom3b"), gr = Math.floor(ETA_MAX * 100) / 100;
+  if (!isFinite(g)) { k.textContent = "Wpisz liczbę."; k.className = "komunikat"; return; }
+  if (Math.abs(g - gr) < 0.005) { k.textContent = `Tak! Granica to ok. ${pl(ETA_MAX.toFixed(3))}. Powyżej uczenie się rozbiega.`; k.className = "komunikat ok"; }
+  else if (g < gr) { k.textContent = "Przy tej wartości uczenie jeszcze działa. Spróbuj większej."; k.className = "komunikat zle"; }
+  else { k.textContent = "Przy tej wartości uczenie już się rozbiega. Spróbuj mniejszej."; k.className = "komunikat zle"; }
+};
+krok3();
+
+// ================= KROK 4 =================
+const liczba = s => parseFloat(String(s).replace(/\s/g, "").replace(",", ".").replace("·10^", "e").replace("×10^", "e"));
+const potega = v => { if (!isFinite(v) || v <= 0) return "–"; const e = Math.floor(Math.log10(v)), m = v / 10 ** e; return `${m.toFixed(2).replace(".", ",")} · 10${String(e).split("").map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c] ?? "⁻").join("")}`; };
+function czas(s) {
+  if (!isFinite(s)) return "–";
+  const jedn = [["lat", 3.156e7], ["dni", 86400], ["godz.", 3600], ["min", 60], ["s", 1]];
+  for (const [n, w] of jedn) if (s >= w) { const v = s / w; return (v >= 100 ? Math.round(v).toLocaleString("pl-PL") : v.toFixed(1).replace(".", ",")) + " " + n; }
+  return s < 1e-3 ? "poniżej 1 ms" : (s * 1000).toFixed(1).replace(".", ",") + " ms";
+}
+function krok4() {
+  const N = liczba(document.getElementById("kN").value), D = liczba(document.getElementById("kD").value), S = +document.getElementById("kS").value;
+  const Cc = 6 * N * D;
+  document.getElementById("kC").textContent = potega(Cc);
+  document.getElementById("kT").textContent = czas(Cc / S);
+}
+["kN", "kD", "kS"].forEach(id => document.getElementById(id).addEventListener("input", krok4));
+document.getElementById("pGpt3").onclick = () => { document.getElementById("kN").value = "175e9"; document.getElementById("kD").value = "300e9"; krok4(); };
+krok4();
+</script>
+</body>
+</html>

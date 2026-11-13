@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI w Twojej nauce</title>
+<meta name="description" content="Kiedy AI pomaga w nauce, a kiedy szkodzi, i co mówią zasady Uniwersytetu SWPS.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .slupki { display: grid; grid-template-columns: minmax(9rem, 13rem) 1fr; gap: 0.5rem 0.8rem; align-items: center; margin: 0.8rem 0; }
+  .slupek { position: relative; height: 1.7rem; background: var(--tlo2); border-radius: 3px; }
+  .slupek .os { position: absolute; left: 30%; top: -4px; bottom: -4px; width: 2px; background: #9aa0a8; }
+  .slupek .pasek { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+  .slupek .wart { position: absolute; top: 50%; transform: translateY(-50%); font-weight: 700; font-family: var(--mono); font-size: 0.9rem; }
+  .grupa-tytul { grid-column: 1 / -1; font-weight: 700; color: var(--granat); margin-top: 0.4rem; }
+  .swiatla .karta { border-top: 6px solid var(--k); }
+  .swiatla .karta h3 { display: flex; gap: 0.5rem; align-items: center; }
+  .swiatla .kropka { width: 1.1rem; height: 1.1rem; border-radius: 50%; background: var(--k); flex: none; }
+  .scen { border: 1px solid var(--linia); border-radius: 6px; padding: 0.9rem 1rem; margin: 0.9rem 0; }
+  .scen .poziom { display: inline-flex; gap: 0.4rem; align-items: center; font-size: 0.85rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px; background: var(--tlo2); }
+  .scen .poziom i { width: 0.8rem; height: 0.8rem; border-radius: 50%; background: var(--k); display: inline-block; }
+  .scen p { margin: 0.5rem 0; }
+  .opcje { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  .opcje button { font-size: 0.9rem; }
+  .opcje button.dobrze { background: #e5f1e6; border-color: var(--zielony); color: var(--zielony); }
+  .opcje button.zle { background: var(--akcent-jasny); border-color: var(--czerwony); color: var(--czerwony); }
+  .wyjasnienie { display: none; margin-top: 0.6rem; font-size: 0.95rem; }
+  .wyjasnienie.widoczne { display: block; }
+  .dialog { border-radius: 6px; padding: 0.8rem 1rem; }
+  .dialog .ja, .dialog .ai { margin: 0.4rem 0; padding: 0.5rem 0.7rem; border-radius: 6px; font-size: 0.93rem; }
+  .dialog .ja { background: var(--granat-jasny); margin-left: 1.5rem; }
+  .dialog .ai { background: var(--tlo2); margin-right: 1.5rem; }
+  .dialog .kto { font-size: 0.75rem; font-weight: 700; color: var(--szary); display: block; text-transform: uppercase; letter-spacing: 0.04em; }
+  .prompt { position: relative; }
+  .prompt pre { white-space: pre-wrap; padding-right: 5.5rem; }
+  .prompt button { position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.8rem; padding: 0.2rem 0.6rem; }
+  .wynik-quizu { font-weight: 700; color: var(--granat); }
+  ul.lista li { margin: 0.35rem 0; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="marka" href="index.html">Kompetencje akademickie · AI</a>
+  <a href="index.html">Wszystkie materiały</a>
+  <a href="uczenie.html">Uczenie to optymalizacja</a>
+</nav>
+
+<header class="dzial">
+  <div class="wnetrze">
+    <div class="numer">7</div>
+    <h1>AI w Twojej nauce</h1>
+    <p>Kiedy AI pomaga Ci się nauczyć, a kiedy robi to za Ciebie — i co na ten temat mówią zasady Uniwersytetu SWPS.</p>
+  </div>
+</header>
+
+<main>
+
+<div class="ramka akcent" style="margin-top:1.6rem">
+  <span class="tytul">Najważniejsze na początek</span>
+  <p>O tym, czy i jak wolno używać AI w danym zadaniu, decyduje <strong>sylabus przedmiotu albo instrukcja zadania</strong>. Ta strona pomaga zrozumieć zasady, ale ich nie zastępuje. W razie wątpliwości — zapytaj prowadzącego, zanim zaczniesz.</p>
+</div>
+
+<!-- ============================================================ -->
+<section id="badania">
+  <h2><span class="krok">1</span>Co mówią badania</h2>
+  <p>Ok. 1000 licealistów w Turcji ćwiczyło matematykę. Jedna grupa miała dostęp do GPT-4 bez ograniczeń, druga do „GPT Tutora”, który podpowiadał zamiast dawać gotowe rozwiązania, trzecia — bez AI (grupa kontrolna). Potem wszyscy pisali egzamin <strong>bez AI</strong>.</p>
+
+  <div class="panel">
+    <div class="slupki" id="slupki"></div>
+    <p class="maly">Zmiana wyniku względem grupy kontrolnej; „≈ 0” — brak istotnej różnicy. Bastani i in., <em>PNAS</em> 122(26), 2025, <a href="https://doi.org/10.1073/pnas.2422633122">doi:10.1073/pnas.2422633122</a>.</p>
+  </div>
+
+  <div class="ramka">
+    <span class="tytul">Wniosek</span>
+    <p>AI, które <strong>myśli za Ciebie</strong>, poprawia wynik dziś i pogarsza jutro. AI, które <strong>zmusza Cię do myślenia</strong>, nie szkodzi. Zasady SWPS nazywają to obroną „pożądanego trudu” — wysiłku, bez którego nie rozwijają się Twoje umiejętności.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="swiatla">
+  <h2><span class="krok">2</span>Sygnalizacja świetlna</h2>
+  <p>Polityka AI Uniwersytetu SWPS dzieli zadania na trzy poziomy. Poziom każdego zadania znajdziesz w sylabusie lub instrukcji.</p>
+  <div class="karty swiatla">
+    <div class="karta" style="--k:var(--czerwony)">
+      <h3><span class="kropka"></span>Czerwony — zakaz AI</h3>
+      <p>Praca samodzielna, „analogowa” albo w kontrolowanym środowisku.</p>
+      <p class="maly">Np. egzamin ustny, esej pisany w sali, rysunek z natury.</p>
+    </div>
+    <div class="karta" style="--k:var(--zolty)">
+      <h3><span class="kropka"></span>Żółty — AI jako asystent</h3>
+      <p>AI wspiera i inspiruje, ale forma i decyzje są Twoje.</p>
+      <p class="maly">Np. wstępny research, tłumaczenie, korekta językowa, burza mózgów.</p>
+    </div>
+    <div class="karta" style="--k:var(--zielony)">
+      <h3><span class="kropka"></span>Zielony — AI pożądane lub wymagane</h3>
+      <p>Praca z AI jest częścią tego, czego masz się nauczyć.</p>
+      <p class="maly">Np. analiza danych, projekty multimedialne, praca z promptami.</p>
+    </div>
+  </div>
+  <p class="maly">Zarządzenie nr 55/2026 Rektora Uniwersytetu SWPS, pkt 3 i 3.1.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="scenariusze">
+  <h2><span class="krok">3</span>Co byś zrobił?</h2>
+  <p>Przy każdej sytuacji wybierz odpowiedź. Wyjaśnienie pojawi się po kliknięciu.</p>
+  <div id="scen"></div>
+  <p class="wynik-quizu" id="wynik"></p>
+  <p class="maly">Odpowiedzi to interpretacja Polityki AI SWPS. Jeśli prowadzący w sylabusie lub instrukcji określił zasady inaczej, obowiązują jego zasady.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="tutor">
+  <h2><span class="krok">4</span>AI jako tutor, nie wykonawca</h2>
+  <p>To samo pytanie z wykładu, zadane na dwa sposoby:</p>
+  <div class="uklad">
+    <div class="dialog ramka akcent">
+      <span class="tytul">Wykonawca</span>
+      <div class="ja"><span class="kto">Ty</span>Dlaczego model, który zawsze mówi „zdrowy”, ma 99% trafności?</div>
+      <div class="ai"><span class="kto">AI</span>Bo choroba dotyczy 1% osób. Model trafia w 99 przypadkach na 100, ale nie wykrywa żadnego chorego. Dlatego przy rzadkich zjawiskach patrzy się na czułość…</div>
+      <p class="maly" style="margin-bottom:0">Masz odpowiedź. Na egzaminie jej nie odtworzysz.</p>
+    </div>
+    <div class="dialog ramka zielona">
+      <span class="tytul">Tutor</span>
+      <div class="ja"><span class="kto">Ty</span>Nie podawaj mi odpowiedzi — zadawaj pytania, aż sam dojdę. Dlaczego model, który zawsze mówi „zdrowy”, ma 99% trafności?</div>
+      <div class="ai"><span class="kto">AI</span>Dobrze. Wyobraź sobie 100 badanych osób. Ile z nich jest chorych, jeśli choroba dotyczy 1%?</div>
+      <p class="maly" style="margin-bottom:0">Odpowiedź budujesz sam. Zostaje w głowie.</p>
+    </div>
+  </div>
+  <p class="maly">Odpowiedzi AI są przykładowe.</p>
+
+  <h3>Gotowe polecenia do skopiowania</h3>
+  <p>Używaj ich do nauki własnej albo w zadaniach, w których poziom AI na to pozwala.</p>
+  <div id="prompty"></div>
+</section>
+
+<!-- ============================================================ -->
+<section id="ocena">
+  <h2><span class="krok">5</span>Jak będziesz oceniany</h2>
+  <p>Gotowy tekst czy kod łatwo dziś wygenerować, więc sam produkt przestaje wystarczać jako dowód umiejętności. Polityka SWPS przesuwa ocenę <strong>z produktu na proces</strong>:</p>
+  <div class="karty">
+    <div class="karta"><h3>Weryfikacja iteracyjna</h3><p>Prowadzący może oceniać etapy: konspekt, szkice, wersje robocze, historię edycji. Brak „cyfrowego śladu” powstawania pracy może podważyć jej autorstwo.</p></div>
+    <div class="karta"><h3>Transparentność</h3><p>Jeśli używasz AI, prowadzący może poprosić o historię promptów i o to, jak wybierałeś wyniki.</p></div>
+    <div class="karta"><h3>Obrona ustna</h3><p>Musisz umieć wyjaśnić i obronić swoją pracę. Jeśli nie potrafisz wyjaśnić, jak działa Twoje własne „dzieło” — to podstawa do <strong>oceny negatywnej</strong>.</p></div>
+  </div>
+  <div class="ramka zielona">
+    <span class="tytul">W praktyce</span>
+    <ul class="lista">
+      <li>Zachowuj wersje robocze (historia wersji w edytorze, kolejne pliki, commity).</li>
+      <li>Zachowuj historię rozmów z AI, z których korzystasz w zadaniach.</li>
+      <li>Przed oddaniem sprawdź: czy umiem wyjaśnić każdy fragment bez zaglądania do AI?</li>
+    </ul>
+  </div>
+  <p class="maly">Polityka AI SWPS, pkt 3.2.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="jawnosc">
+  <h2><span class="krok">6</span>Deklaracja i odpowiedzialność</h2>
+  <ul class="lista">
+    <li><strong>Deklaracja</strong> jest obowiązkowa, gdy celowo używasz modelu generatywnego do tworzenia nowych treści: tekstu, obrazu, wideo, kodu (pkt 2.3).</li>
+    <li><strong>Nie musisz deklarować</strong> zwykłych narzędzi z wbudowaną AI, np. sprawdzania pisowni w edytorze — o ile główna kompozycja pracy jest Twoja (tzw. klauzula nieświadomości).</li>
+    <li><strong>AI nie jest współautorem.</strong> Za wszystko, co oddajesz, odpowiadasz Ty — także za zmyślone przez model źródła (pkt 2.2).</li>
+    <li><strong>Dostęp:</strong> uczelnia zapewnia dostęp do rekomendowanych narzędzi AI. Brak dostępu do konkretnego narzędzia nie może obniżyć Twojej oceny (pkt 5.1).</li>
+  </ul>
+
+  <div class="ramka">
+    <span class="tytul">Przykład deklaracji — z samej Polityki AI SWPS</span>
+    <p><em>„Niniejszy dokument przygotowany został przy wsparciu modelu Gemini 3 w zakresie gromadzenia danych, porządkowania informacji i wariantowania struktury.”</em></p>
+    <p class="maly">Dobra deklaracja mówi: <strong>jakie narzędzie</strong> i <strong>do czego</strong>. Polityka nie podaje obowiązkowego wzoru — formę może określić prowadzący.</p>
+  </div>
+
+  <h3>Co grozi za złamanie zasad</h3>
+  <ul class="lista">
+    <li>Niestosowanie się do sylabusu narusza obowiązki studenta (Regulamin studiów, § 19 pkt 3 i 5).</li>
+    <li>Brak umiejętności obrony pracy: ocena negatywna (Polityka AI, pkt 3.2).</li>
+    <li>Zadanie wykonane z naruszeniem praw własności intelektualnej: zawiadomienie o możliwym przewinieniu dyscyplinarnym; jeśli się potwierdzi — ocena niedostateczna i powtarzanie przedmiotu (Regulamin, § 108).</li>
+    <li>Praca dyplomowa z przypisanym sobie fragmentem cudzego utworu lub ustalenia naukowego: brak tytułu zawodowego, a po jego nadaniu — postępowanie w sprawie stwierdzenia nieważności dyplomu (Regulamin, § 109).</li>
+  </ul>
+</section>
+
+<section id="zrodla">
+  <h2>Źródła</h2>
+  <ul class="lista maly">
+    <li>Polityka wykorzystania i integracji narzędzi sztucznej inteligencji w Uniwersytecie SWPS — załącznik do Zarządzenia nr 55/2026 Rektora z 1 czerwca 2026 r.</li>
+    <li>Regulamin studiów w Uniwersytecie SWPS, wersja od 1 października 2026 r.</li>
+    <li>Zasady studiowania na Wydziale Projektowania w Warszawie, rok akademicki 2026/2027.</li>
+    <li>Bastani, H., Bastani, O., Sungu, A., Ge, H., Kabakcı, Ö., Mariman, R. (2025). Generative AI without guardrails can harm learning: Evidence from high school mathematics. <em>PNAS</em>, 122(26), e2422633122.</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>dr inż. Paweł Róg · Uniwersytet SWPS · materiał do wykładu „AI to informatyka w działaniu”</footer>
+
+<script>
+"use strict";
+// ---------- słupki: wyniki Bastani i in. ----------
+const dane = [
+  ["GPT-4 bez ograniczeń", [["ćwiczenia", 48], ["egzamin bez AI", -17]]],
+  ["„GPT Tutor”", [["ćwiczenia", 127], ["egzamin bez AI", 0]]],
+];
+const sl = document.getElementById("slupki");
+const skala = v => v / 140 * 52; // 0 % w 30 % szerokości; zostaje miejsce na etykietę
+for (const [grupa, wiersze] of dane) {
+  sl.insertAdjacentHTML("beforeend", `<div class="grupa-tytul">${grupa}</div>`);
+  for (const [et, v] of wiersze) {
+    const kol = v > 0 ? "var(--zielony)" : v < 0 ? "var(--czerwony)" : "var(--szary)";
+    const left = v >= 0 ? 30 : 30 + skala(v), w = Math.max(Math.abs(skala(v)), 0.6);
+    const tekst = v === 0 ? "≈ 0" : (v > 0 ? "+" : "−") + Math.abs(v) + "%";
+    const pozT = v >= 0 ? `left:calc(${30 + w}% + 6px)` : `left:calc(${left}% - 4.2rem)`;
+    sl.insertAdjacentHTML("beforeend",
+      `<div>${et}</div><div class="slupek"><div class="os"></div><div class="pasek" style="left:${left}%;width:${w}%;background:${kol}"></div><span class="wart" style="${pozT};color:${kol}">${tekst}</span></div>`);
+  }
+}
+
+// ---------- scenariusze ----------
+const OPCJE = ["Wolno, bez deklaracji", "Wolno, z deklaracją", "Nie wolno", "Najpierw zapytam prowadzącego"];
+const POZ = { c: ["Czerwony", "var(--czerwony)"], z: ["Żółty", "var(--zolty)"], g: ["Zielony", "var(--zielony)"], n: ["Brak informacji", "var(--szary)"] };
+const SCEN = [
+  { p: "c", t: "Esej pisany w sali. W trakcie zaglądasz do czatu AI na telefonie, „tylko żeby sprawdzić jeden argument”.", d: 2,
+    w: "Poziom czerwony to praca samodzielna w kontrolowanym środowisku — nawet krótkie sprawdzenie jest użyciem AI. Dodatkowo na zajęciach urządzeń elektronicznych wolno używać tylko do celów wskazanych przez prowadzącego (Zasady studiowania WP, § 17 ust. 1)." },
+  { p: "z", t: "Piszesz esej w domu. Edytor tekstu podkreśla literówki i podpowiada poprawki interpunkcji.", d: 0,
+    w: "To standardowe narzędzie z wbudowaną AI. Jeśli główna kompozycja jest Twoja, deklaracja nie jest wymagana („klauzula nieświadomości”, pkt 2.3)." },
+  { p: "z", t: "Wklejasz swój gotowy esej do czatu AI i prosisz o korektę językową. Przyjmujesz część poprawek.", d: 1,
+    w: "Korekta językowa to typowy przykład poziomu żółtego. Ale tym razem celowo użyłeś modelu generatywnego, który wygenerował nowy tekst — dlatego deklarujesz (pkt 2.3). Różnica z poprzednią sytuacją: tam narzędzie działało w tle, tu świadomie poprosiłeś model o przepisanie tekstu." },
+  { p: "z", t: "Prosisz model o napisanie całego eseju na podstawie Twojego konspektu, a potem poprawiasz styl.", d: 2,
+    w: "Na poziomie żółtym AI jest asystentem, nie autorem. Kluczowe etapy pracy twórczej i myślenia mają pozostać Twoje (pkt 2.1). Deklaracja tego nie naprawia — a na obronie ustnej trudno będzie wyjaśnić tekst, którego nie napisałeś (pkt 3.2)." },
+  { p: "z", t: "Na początku pracy prosisz model o listę artykułów na temat. Dwa z nich cytujesz — po sprawdzeniu, że istnieją i mówią to, co piszesz.", d: 1,
+    w: "Wstępny research to poziom żółty, a użycie modelu deklarujesz. Sprawdzenie źródeł było obowiązkowe: modele potrafią zmyślić autora, tytuł i rok, a odpowiedzialność za cytowanie ponosisz Ty (pkt 2.2)." },
+  { p: "g", t: "Projekt z analizy danych, w którym praca z AI jest wymagana. Model pisze kod do wykresów, Ty go sprawdzasz i poprawiasz.", d: 1,
+    w: "Poziom zielony — dobrze. Deklarujesz użycie, zachowujesz historię promptów i musisz umieć wyjaśnić każdy wykres, bo prowadzący może poprosić o dokumentację i obronę (pkt 3.2)." },
+  { p: "n", t: "W sylabusie nie ma nic o AI, instrukcja zadania też milczy.", d: 3,
+    w: "Poziom określa sylabus albo instrukcja zadania (pkt 3). Gdy nie ma informacji, zapytaj prowadzącego przed rozpoczęciem pracy — najlepiej na piśmie, żeby mieć odpowiedź." },
+];
+const kont = document.getElementById("scen"); let pkt = 0, odp = 0;
+SCEN.forEach((s, i) => {
+  const [nazwa, kolor] = POZ[s.p];
+  const el = document.createElement("div"); el.className = "scen";
+  el.innerHTML = `<span class="poziom" style="--k:${kolor}"><i></i>Poziom w sylabusie: ${nazwa}</span>
+    <p><strong>${i + 1}.</strong> ${s.t}</p><div class="opcje"></div><div class="wyjasnienie"></div>`;
+  const op = el.querySelector(".opcje"), wy = el.querySelector(".wyjasnienie");
+  OPCJE.forEach((o, k) => {
+    const b = document.createElement("button"); b.textContent = o;
+    b.onclick = () => {
+      if (el.dataset.gotowe) return;
+      el.dataset.gotowe = 1; odp++;
+      const ok = k === s.d; if (ok) pkt++;
+      op.querySelectorAll("button").forEach((x, j) => { x.disabled = j !== k && j !== s.d; if (j === s.d) x.classList.add("dobrze"); });
+      if (!ok) b.classList.add("zle");
+      wy.innerHTML = `<strong>${ok ? "Tak." : "Nie do końca. Właściwa odpowiedź: " + OPCJE[s.d].toLowerCase() + "."}</strong> ${s.w}`;
+      wy.classList.add("widoczne");
+      document.getElementById("wynik").textContent = `Wynik: ${pkt} / ${odp}` + (odp === SCEN.length ? " — to wszystkie sytuacje." : "");
+    };
+    op.appendChild(b);
+  });
+  kont.appendChild(el);
+});
+
+// ---------- prompty ----------
+const PROMPTY = [
+  ["Tutor sokratejski", "Uczę się: [temat]. Nie podawaj mi gotowych odpowiedzi ani rozwiązań. Zadawaj mi po jednym pytaniu naraz, aż sam dojdę do rozwiązania. Jeśli się pomylę, wskaż, w którym miejscu, ale nie poprawiaj za mnie."],
+  ["Sprawdź moje wyjaśnienie", "Poniżej wyjaśniam własnymi słowami pojęcie: [pojęcie]. Wskaż błędy i nieścisłości, ale nie pisz poprawionej wersji — chcę ją poprawić sam.\n\n[Twoje wyjaśnienie]"],
+  ["Pytania z moich notatek", "Na podstawie moich notatek ułóż 5 pytań sprawdzających zrozumienie, a nie pamięć. Nie podawaj odpowiedzi, dopóki nie odpowiem na wszystkie.\n\n[Twoje notatki]"],
+  ["Znajdź słaby punkt", "Oto moje rozumowanie: [rozumowanie]. Podaj kontrprzykład albo wskaż najsłabszy krok. Nie przepisuj całości."],
+];
+const pr = document.getElementById("prompty");
+for (const [tyt, txt] of PROMPTY) {
+  const d = document.createElement("div"); d.className = "prompt";
+  d.innerHTML = `<h3 style="margin:1rem 0 0.2rem;font-size:1rem">${tyt}</h3><pre></pre><button>Kopiuj</button>`;
+  d.querySelector("pre").textContent = txt;
+  const b = d.querySelector("button");
+  b.onclick = async () => {
+    try { await navigator.clipboard.writeText(txt); b.textContent = "Skopiowano"; }
+    catch { const r = document.createRange(); r.selectNodeContents(d.querySelector("pre")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Zaznaczono — Ctrl+C"; }
+    setTimeout(() => b.textContent = "Kopiuj", 1800);
+  };
+  pr.appendChild(d);
+}
+</script>
+</body>
+</html>

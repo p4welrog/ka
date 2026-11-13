@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI to informatyka w działaniu</title>
+<meta name="description" content="Materiały do pracy po wykładzie z Kompetencji akademickich: jak działa AI i jak mądrze z niej korzystać.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .filary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin: 1.2rem 0 0.4rem; }
+  .filar { border: 1.5px solid var(--granat); background: var(--granat-jasny); border-radius: 6px; padding: 0.7rem; text-align: center; }
+  .filar b { display: block; color: var(--granat); }
+  .filar span { font-size: 0.85rem; color: var(--szary); }
+  @media (max-width: 680px) { .filary { grid-template-columns: 1fr 1fr; } }
+  .karta .nr { font-size: 2rem; font-weight: 700; color: var(--akcent); line-height: 1; }
+  .karta.wkrotce .nr { color: var(--szary); }
+  .status { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--szary); }
+</style>
+</head>
+<body>
+
+<header class="dzial">
+  <div class="wnetrze">
+    <div class="numer">KA</div>
+    <h1>AI to informatyka w działaniu</h1>
+    <p>Materiały do pracy po wykładzie z Kompetencji akademickich. Wszystko działa w przeglądarce — bez instalowania czegokolwiek i bez programowania.</p>
+  </div>
+</header>
+
+<main>
+<section>
+  <h2>Teza wykładu</h2>
+  <p>Każdy system „sztucznej inteligencji” składa się z czterech elementów. Każdy z nich to zwykły dział informatyki:</p>
+  <div class="filary">
+    <div class="filar"><b>Reprezentacja</b><span>świat zapisany jako liczby</span></div>
+    <div class="filar"><b>Przeszukiwanie</b><span>graf stanów i heurystyka</span></div>
+    <div class="filar"><b>Uczenie</b><span>błąd i krok w dół</span></div>
+    <div class="filar"><b>Skala</b><span>miliardy parametrów, tysiące kart GPU</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Materiały</h2>
+  <div class="karty">
+    <div class="karta wkrotce"><div class="nr">1</div><h3>Reprezentacja</h3><p class="maly">Narysuj cyfrę i zobacz, jak widzi ją komputer.</p><span class="status">wkrótce</span></div>
+    <div class="karta wkrotce"><div class="nr">2</div><h3>Przeszukiwanie</h3><p class="maly">Przesuwanka i algorytm A*.</p><span class="status">wkrótce</span></div>
+    <a class="karta" href="uczenie.html"><div class="nr">3</div><h3>Uczenie to optymalizacja</h3><p class="maly">Dopasuj prostą sam, potem zobacz, jak robi to komputer. Za mały i za duży krok uczenia.</p><span class="status" style="color:var(--zielony)">dostępne</span></a>
+    <div class="karta wkrotce"><div class="nr">5</div><h3>Pułapki</h3><p class="maly">Skąd się bierze fałszywe „99% skuteczności”.</p><span class="status">wkrótce</span></div>
+    <div class="karta wkrotce"><div class="nr">6</div><h3>Jak oceniać twierdzenia o AI</h3><p class="maly">Pięć pytań do każdego nagłówka.</p><span class="status">wkrótce</span></div>
+    <a class="karta" href="ai-w-nauce.html"><div class="nr">7</div><h3>AI w Twojej nauce</h3><p class="maly">Kiedy AI pomaga, a kiedy szkodzi. Sygnalizacja świetlna i zasady SWPS w przykładach.</p><span class="status" style="color:var(--zielony)">dostępne</span></a>
+  </div>
+</section>
+</main>
+
+<footer>dr inż. Paweł Róg · Uniwersytet SWPS · Wydział Projektowania</footer>
+</body>
+</html>

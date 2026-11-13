@@ -1,0 +1,146 @@
+/* Wspólny styl materiałów — estetyka slajdów wykładu */
+:root {
+  --akcent: #b5162b;
+  --akcent-jasny: #f6e3e6;
+  --granat: #1f4e79;
+  --granat-jasny: #e6edf4;
+  --szary: #6b7280;
+  --linia: #e3e5e8;
+  --tlo: #ffffff;
+  --tlo2: #f5f6f7;
+  --tekst: #1d1f23;
+  --zielony: #2e7d32;
+  --zolty: #d39e00;
+  --czerwony: #c62828;
+  --font: "Fira Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "Fira Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--tlo); color: var(--tekst);
+  font-family: var(--font); font-size: 18px; line-height: 1.55;
+}
+
+/* Pasek nawigacji */
+.nav {
+  display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+  padding: 0.6rem 16px; border-bottom: 1px solid var(--linia); font-size: 0.9rem;
+}
+.nav a { color: var(--granat); text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .marka { font-weight: 700; color: var(--akcent); margin-right: auto; }
+
+/* Nagłówek jak slajd działu */
+.dzial {
+  background: var(--granat); color: #fff; padding: 2.4rem 16px 2.2rem;
+}
+.dzial .wnetrze { max-width: 920px; margin: 0 auto; }
+.dzial .numer { font-size: 4rem; font-weight: 700; line-height: 1; color: rgba(255,255,255,0.45); }
+.dzial h1 { margin: 0.2rem 0 0.6rem; font-size: 2.3rem; line-height: 1.15; }
+.dzial p { margin: 0; max-width: 680px; color: rgba(255,255,255,0.88); }
+
+main { max-width: 920px; margin: 0 auto; padding: 0 16px 3rem; }
+
+/* Sekcje jak slajdy z czerwonym tytułem i linią */
+section { padding-top: 2.2rem; }
+h2 {
+  color: var(--akcent); font-size: 1.6rem; margin: 0 0 0.9rem;
+  padding-bottom: 0.35rem; border-bottom: 2px solid #e8b9c0;
+}
+h2 .krok { color: var(--szary); font-weight: 500; font-size: 1rem; display: block; letter-spacing: 0.04em; text-transform: uppercase; }
+h3 { color: var(--granat); font-size: 1.15rem; margin: 1.4rem 0 0.5rem; }
+strong { color: var(--granat); }
+a { color: var(--granat); }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--tlo2); padding: 0.05em 0.3em; border-radius: 3px; }
+pre {
+  font-family: var(--mono); font-size: 0.85rem; line-height: 1.45; background: var(--tlo2);
+  padding: 0.9rem 1rem; border-radius: 5px; overflow-x: auto; margin: 0.6rem 0;
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+.maly { font-size: 0.85rem; color: var(--szary); }
+
+/* Ramka jak na slajdach */
+.ramka {
+  background: var(--granat-jasny); border-left: 4px solid var(--granat);
+  border-radius: 4px; padding: 0.75rem 1rem; margin: 1rem 0;
+}
+.ramka.akcent { background: var(--akcent-jasny); border-color: var(--akcent); }
+.ramka.zielona { background: #e5f1e6; border-color: var(--zielony); }
+.ramka .tytul { display: block; font-weight: 700; color: var(--granat); margin-bottom: 0.2rem; }
+.ramka.akcent .tytul { color: var(--akcent); }
+.ramka.zielona .tytul { color: var(--zielony); }
+.ramka p:first-child { margin-top: 0; } .ramka p:last-child { margin-bottom: 0; }
+
+/* Panel z interakcją */
+.panel { border: 1px solid var(--linia); border-radius: 6px; padding: 1rem; margin: 1rem 0; background: #fff; }
+.uklad { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+@media (max-width: 760px) { .uklad { grid-template-columns: 1fr; } }
+canvas { width: 100%; height: auto; display: block; border-radius: 4px; touch-action: none; }
+.podpis { font-size: 0.82rem; color: var(--szary); text-align: center; margin-top: 0.3rem; }
+
+/* Kontrolki */
+.suwak { display: grid; grid-template-columns: 5.5rem 1fr 4.2rem; gap: 0.6rem; align-items: center; margin: 0.45rem 0; }
+.suwak label { font-weight: 600; }
+.suwak output { font-family: var(--mono); text-align: right; }
+input[type=range] { width: 100%; accent-color: var(--akcent); }
+.przyciski { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.7rem 0; }
+button {
+  font: inherit; font-size: 0.95rem; padding: 0.45rem 0.9rem; border-radius: 4px; cursor: pointer;
+  border: 1.5px solid var(--granat); background: #fff; color: var(--granat);
+}
+button:hover { background: var(--granat-jasny); }
+button.glowny { background: var(--akcent); border-color: var(--akcent); color: #fff; }
+button.glowny:hover { background: #961223; }
+button:disabled { opacity: 0.45; cursor: default; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid #f0b4bd; outline-offset: 2px; }
+input[type=number], input[type=text] {
+  font: inherit; padding: 0.35rem 0.5rem; border: 1.5px solid var(--linia); border-radius: 4px; width: 7rem;
+}
+
+/* Liczniki */
+.liczniki { display: flex; flex-wrap: wrap; gap: 0.6rem 1.4rem; margin: 0.6rem 0; }
+.licznik { font-size: 0.85rem; color: var(--szary); }
+.licznik b { display: block; font-family: var(--mono); font-size: 1.35rem; color: var(--tekst); font-weight: 600; }
+.licznik.duzy b { font-size: 2rem; color: var(--akcent); }
+
+/* Pytania z odpowiedzią */
+details {
+  border: 1px solid var(--linia); border-radius: 5px; margin: 0.6rem 0; background: #fff;
+}
+details > summary {
+  cursor: pointer; padding: 0.65rem 0.9rem; font-weight: 600; color: var(--granat); list-style: none;
+}
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "▸ "; color: var(--akcent); }
+details[open] > summary::before { content: "▾ "; }
+details > .odp { padding: 0 0.9rem 0.8rem; }
+
+.komunikat { min-height: 1.6em; font-weight: 600; margin: 0.5rem 0; }
+.komunikat.ok { color: var(--zielony); }
+.komunikat.zle { color: var(--czerwony); }
+
+/* Karty */
+.karty { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.9rem; margin: 1rem 0; }
+.karta { border: 1px solid var(--linia); border-radius: 6px; padding: 0.9rem 1rem; background: #fff; }
+.karta h3 { margin-top: 0; }
+a.karta { text-decoration: none; color: inherit; border-color: var(--granat); }
+a.karta:hover { background: var(--granat-jasny); }
+.karta.wkrotce { opacity: 0.55; }
+
+/* Tabele */
+table { border-collapse: collapse; width: 100%; margin: 0.8rem 0; font-size: 0.95rem; }
+th { background: var(--granat-jasny); color: var(--granat); text-align: left; }
+th, td { padding: 0.45rem 0.7rem; vertical-align: top; }
+tbody tr:nth-child(even) td { background: var(--tlo2); }
+.tabela-zawijana { overflow-x: auto; }
+
+footer { border-top: 1px solid var(--linia); padding: 1.2rem 16px; text-align: center; font-size: 0.85rem; color: var(--szary); }
+
+@media (max-width: 560px) {
+  body { font-size: 17px; }
+  .dzial h1 { font-size: 1.8rem; }
+  .dzial .numer { font-size: 3rem; }
+  .suwak { grid-template-columns: 4.2rem 1fr 3.6rem; }
+}

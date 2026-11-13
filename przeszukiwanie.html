@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Przeszukiwanie</title>
+<meta name="description" content="Interaktywny materiał do wykładu: przesuwanka, graf stanów, heurystyka i algorytm A*.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .plansza { position: relative; width: 222px; height: 222px; background: var(--tlo2); border-radius: 6px; flex: none; }
+  .klocek {
+    position: absolute; width: 68px; height: 68px; border-radius: 5px; display: grid; place-items: center;
+    font-size: 1.8rem; font-weight: 700; background: #d6e1ec; border: 2px solid var(--granat); color: var(--tekst);
+    cursor: pointer; user-select: none; touch-action: manipulation;
+  }
+  .plansza.gotowa .klocek { transition: transform 0.16s ease; }
+  .klocek.na-miejscu { background: #dcebdc; border-color: var(--zielony); }
+  .klocek:focus-visible { outline: 3px solid #f0b4bd; outline-offset: 2px; }
+  .gra { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start; }
+  .cel-mini { display: grid; grid-template-columns: repeat(3, 26px); gap: 2px; }
+  .cel-mini div, .mini div { display: grid; place-items: center; font-weight: 700; border-radius: 2px; }
+  .cel-mini div { height: 26px; font-size: 0.85rem; background: #dcebdc; border: 1px solid var(--zielony); }
+  .cel-mini div.pusty, .mini div.pusty { background: #fff; border: 1px solid var(--linia); }
+  .drzewo { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+  .dzieci { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
+  .wezel { border: 1.5px solid var(--linia); border-radius: 6px; padding: 0.45rem; text-align: center; background: #fff; }
+  .wezel.najlepszy { border-color: var(--akcent); background: var(--akcent-jasny); }
+  .wezel.korzen { border-color: var(--granat); }
+  .mini { display: grid; grid-template-columns: repeat(3, 20px); gap: 2px; margin: 0 auto 0.3rem; }
+  .mini div { height: 20px; font-size: 0.7rem; background: #d6e1ec; border: 1px solid var(--granat); }
+  .mini div.ruszony { background: #f0b4bd; border-color: var(--akcent); }
+  .wezel .fgh { font-family: var(--mono); font-size: 0.78rem; line-height: 1.35; }
+  .strzalki { color: var(--szary); font-size: 1.2rem; }
+  .pasek-wyn { height: 0.9rem; background: var(--granat); border-radius: 2px; min-width: 2px; }
+  td.liczba { font-family: var(--mono); text-align: right; }
+  .kalk select { font: inherit; padding: 0.3rem; border-radius: 4px; border: 1.5px solid var(--linia); max-width: 100%; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="marka" href="index.html">Kompetencje akademickie · AI</a>
+  <a href="reprezentacja.html">Reprezentacja</a>
+  <a href="przeszukiwanie.html">Przeszukiwanie</a>
+  <a href="uczenie.html">Uczenie</a>
+  <a href="pulapki.html">Pułapki</a>
+  <a href="ocena.html">Ocena twierdzeń</a>
+  <a href="ai-w-nauce.html">AI w nauce</a>
+</nav>
+
+<header class="dzial">
+  <div class="wnetrze">
+    <div class="numer">2</div>
+    <h1>Przeszukiwanie</h1>
+    <p>Wiele problemów to szukanie drogi w grafie: od stanu początkowego do celu. Ułóż przesuwankę sam, a potem porównaj, jak robią to różne algorytmy.</p>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================================================ -->
+<section id="sam">
+  <h2><span class="krok">Krok 1</span>Ułóż sam</h2>
+  <p>Kliknij klocek sąsiadujący z pustym polem, żeby go przesunąć. Cel: klocki 1–8 po kolei, puste pole w prawym dolnym rogu.</p>
+
+  <div class="panel">
+    <div class="gra">
+      <div class="plansza" id="plansza" aria-label="Przesuwanka 3 na 3"></div>
+      <div>
+        <div class="liczniki">
+          <div class="licznik">Twoje ruchy<b id="ruchy">0</b></div>
+          <div class="licznik">heurystyka h<b id="hTeraz">–</b></div>
+        </div>
+        <p class="maly" style="margin:0.2rem 0 0.4rem">cel:</p>
+        <div class="cel-mini" id="celMini"></div>
+        <div id="kom1" class="komunikat"></div>
+      </div>
+    </div>
+    <div class="przyciski">
+      <span class="maly" style="align-self:center">Wymieszaj:</span>
+      <button data-mix="8">łatwo</button>
+      <button data-mix="20">średnio</button>
+      <button class="glowny" data-mix="60">trudno</button>
+    </div>
+  </div>
+
+  <div class="ramka">
+    <span class="tytul">Heurystyka h — „ile jeszcze zostało?”</span>
+    <p>Dla każdego klocka liczymy, o ile pól (w poziomie i w pionie) jest oddalony od swojego miejsca, i sumujemy. To <strong>odległość Manhattan</strong>. Jest optymistyczna: każdy ruch przesuwa tylko jeden klocek o jedno pole, więc prawdziwe rozwiązanie nigdy nie jest krótsze niż h.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="graf">
+  <h2><span class="krok">Krok 2</span>Każdy stan to węzeł grafu</h2>
+  <p>Z bieżącego ustawienia da się zrobić 2, 3 albo 4 ruchy. Każdy prowadzi do nowego stanu — to <strong>krawędzie grafu</strong>. Algorytm A* ocenia każdy stan liczbą <span style="font-family:var(--mono)">f = g + h</span>:</p>
+  <ul>
+    <li><strong>g</strong> — ile ruchów już wykonano od startu,</li>
+    <li><strong>h</strong> — ile ruchów jeszcze (co najmniej) zostało, według heurystyki.</li>
+  </ul>
+  <p>A* zawsze rozwija najpierw stan o <strong>najmniejszym f</strong>. Poniżej sąsiedzi stanu z kroku 1 — przesuwaj klocki, a drzewo się zmieni.</p>
+  <div class="panel"><div class="drzewo" id="drzewo"></div></div>
+</section>
+
+<!-- ============================================================ -->
+<section id="algorytmy">
+  <h2><span class="krok">Krok 3</span>Cztery algorytmy, jeden problem</h2>
+  <p>Wszystkie algorytmy rozwiązują <strong>to samo ustawienie</strong>, które masz w kroku 1. Liczymy, ile stanów każdy musiał rozwinąć, zanim znalazł rozwiązanie.</p>
+
+  <div class="panel">
+    <div class="przyciski">
+      <button class="glowny" id="uruchom">Uruchom wszystkie</button>
+      <button id="odtworz" disabled>Odtwórz rozwiązanie A* na planszy</button>
+    </div>
+    <div class="tabela-zawijana">
+      <table>
+        <thead><tr><th>algorytm</th><th>rozwinięte stany</th><th></th><th>długość rozwiązania</th><th>najkrótsze?</th></tr></thead>
+        <tbody id="wyniki"><tr><td colspan="5" class="maly">Kliknij „Uruchom wszystkie”.</td></tr></tbody>
+      </table>
+    </div>
+    <p class="maly">Długość paska — liczba rozwiniętych stanów w skali logarytmicznej.</p>
+  </div>
+
+  <details>
+    <summary>Przeszukiwanie wszerz — sprawdza wszystko po kolei</summary>
+    <div class="odp"><p>Najpierw wszystkie stany o 1 ruch od startu, potem o 2 ruchy, potem o 3… Zawsze znajdzie najkrótsze rozwiązanie, ale nie ma żadnej podpowiedzi, gdzie szukać. Przy trudnym ustawieniu przegląda dziesiątki tysięcy stanów.</p></div>
+  </details>
+  <details>
+    <summary>Zachłanny — patrzy tylko na h</summary>
+    <div class="odp"><p>Zawsze idzie do stanu, który <em>wydaje się</em> najbliżej celu, i nie liczy, ile już przeszedł. Bywa bardzo szybki, ale jego rozwiązania często są dłuższe niż trzeba — sprawdź kolumnę „najkrótsze?”.</p></div>
+  </details>
+  <details>
+    <summary>A* z dwiema różnymi heurystykami</summary>
+    <div class="odp">
+      <p><strong>„Klocki nie na miejscu”</strong> liczy tylko, ile klocków stoi źle. <strong>„Manhattan”</strong> liczy też, jak daleko. Obie są optymistyczne, więc A* z każdą z nich znajduje najkrótsze rozwiązanie — ale Manhattan jest „mądrzejsza” (bliższa prawdzie), więc A* rozwija dużo mniej stanów.</p>
+      <p>To główna lekcja: <strong>dobra heurystyka to wiedza o problemie</strong>, która oszczędza obliczeń.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section id="wybuch">
+  <h2><span class="krok">Krok 4</span>Wybuch kombinatoryczny</h2>
+  <p>Przesuwanka 3 × 3 ma 181 440 osiągalnych stanów — komputer przejrzy je wszystkie w ułamku sekundy. Ale liczba stanów rośnie bardzo szybko:</p>
+
+  <div class="panel">
+    <div class="kalk" style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:0.5rem 0.8rem;align-items:center;max-width:620px">
+      <label for="problem">problem</label>
+      <select id="problem"></select>
+      <label for="szybkosc">komputer sprawdza</label>
+      <select id="szybkosc">
+        <option value="1e6">milion stanów na sekundę</option>
+        <option value="1e9" selected>miliard stanów na sekundę</option>
+        <option value="1e15">biliard stanów na sekundę (superkomputer)</option>
+      </select>
+    </div>
+    <div class="liczniki" style="margin-top:0.8rem">
+      <div class="licznik">liczba stanów<b id="lStanow">–</b></div>
+      <div class="licznik duzy">czas sprawdzenia wszystkich<b id="czasW">–</b></div>
+    </div>
+    <p class="maly" id="porownanie"></p>
+  </div>
+
+  <div class="ramka">
+    <span class="tytul">Wniosek</span>
+    <p>Dla prawdziwych problemów pełne przeszukanie jest niemożliwe nawet w zasadzie. Zostają <strong>heurystyki</strong>. W szachach i go programy łączą przeszukiwanie z heurystyką <strong>wyuczoną</strong> przez sieć neuronową, która ocenia pozycję — tak działał AlphaGo. Tak spotykają się przeszukiwanie i uczenie (<a href="uczenie.html">materiał 3</a>).</p>
+  </div>
+  <details>
+    <summary>Skąd te liczby?</summary>
+    <div class="odp maly">
+      <p>Przesuwanka 3 × 3: 9!/2 = 181 440 (osiągalna jest tylko połowa ustawień). Przesuwanka 4 × 4: 16!/2 ≈ 1,05 · 10¹³. Kółko i krzyżyk: 5478 legalnych pozycji. Szachy: oszacowanie J. Trompa ≈ 4,8 · 10⁴⁴ legalnych pozycji. Go 19 × 19: J. Tromp i G. Farnebäck policzyli ≈ 2,08 · 10¹⁷⁰ legalnych pozycji.</p>
+    </div>
+  </details>
+</section>
+
+</main>
+
+<footer>dr inż. Paweł Róg · Uniwersytet SWPS · materiał do wykładu „AI to informatyka w działaniu”</footer>
+
+<script>
+"use strict";
+const CEL = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+const RUCHY = [[1, 3], [0, 2, 4], [1, 5], [0, 4, 6], [1, 3, 5, 7], [2, 4, 8], [3, 7], [4, 6, 8], [5, 7]];
+const klucz = s => s.join("");
+const sasiedzi = s => { const p = s.indexOf(0); return RUCHY[p].map(q => { const t = s.slice(); t[p] = t[q]; t[q] = 0; return t; }); };
+function manhattan(s) { let h = 0; s.forEach((v, i) => { if (v) { const c = v - 1; h += Math.abs(Math.floor(i / 3) - Math.floor(c / 3)) + Math.abs(i % 3 - c % 3); } }); return h; }
+const nieNaMiejscu = s => s.reduce((a, v, i) => a + (v && v !== CEL[i] ? 1 : 0), 0);
+const jestCel = s => klucz(s) === klucz(CEL);
+
+// ---------- kopiec binarny ----------
+class Kopiec {
+  constructor() { this.a = []; }
+  get size() { return this.a.length; }
+  push(x) { const a = this.a; a.push(x); let i = a.length - 1; while (i) { const p = (i - 1) >> 1; if (a[p][0] < a[i][0] || (a[p][0] === a[i][0] && a[p][1] <= a[i][1])) break; [a[p], a[i]] = [a[i], a[p]]; i = p; } }
+  pop() {
+    const a = this.a, top = a[0], last = a.pop();
+    if (a.length) { a[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i;
+      const mniej = (x, y) => a[x][0] < a[y][0] || (a[x][0] === a[y][0] && a[x][1] < a[y][1]);
+      if (l < a.length && mniej(l, m)) m = l; if (r < a.length && mniej(r, m)) m = r; if (m === i) break; [a[m], a[i]] = [a[i], a[m]]; i = m; } }
+    return top;
+  }
+}
+
+// ---------- wyszukiwanie ----------
+function odtworzSciezke(rodzic, k) { const p = []; while (k) { p.push(k); k = rodzic.get(k); } return p.reverse(); }
+function wszerz(start) {
+  const s0 = klucz(start), rodzic = new Map([[s0, null]]), kolejka = [start]; let glowa = 0, rozw = 0;
+  while (glowa < kolejka.length) {
+    const s = kolejka[glowa++]; const k = klucz(s);
+    if (jestCel(s)) return { sciezka: odtworzSciezke(rodzic, k), rozw };
+    rozw++;
+    for (const t of sasiedzi(s)) { const kt = klucz(t); if (!rodzic.has(kt)) { rodzic.set(kt, k); kolejka.push(t); } }
+  }
+}
+function najpierwNajlepszy(start, h, waga) {   // waga = 1: A*, waga = 0: zachłanny
+  const s0 = klucz(start), g = new Map([[s0, 0]]), rodzic = new Map([[s0, null]]), zamk = new Set(), kop = new Kopiec();
+  let licz = 0, rozw = 0; kop.push([h(start), licz++, start]);
+  while (kop.size) {
+    const [, , s] = kop.pop(), k = klucz(s);
+    if (zamk.has(k)) continue;
+    if (jestCel(s)) return { sciezka: odtworzSciezke(rodzic, k), rozw };
+    zamk.add(k); rozw++;
+    for (const t of sasiedzi(s)) {
+      const kt = klucz(t), ng = g.get(k) + 1;
+      if (zamk.has(kt) || (g.has(kt) && g.get(kt) <= ng)) continue;
+      g.set(kt, ng); rodzic.set(kt, k); kop.push([waga * ng + h(t), licz++, t]);
+    }
+  }
+}
+
+// ================= KROK 1: plansza =================
+let stan = CEL.slice(), ruchy = 0, animacja = null;
+const plansza = document.getElementById("plansza"), klocki = {};
+const POZ = i => `translate(${(i % 3) * 74 + 4}px, ${Math.floor(i / 3) * 74 + 4}px)`;
+for (let v = 1; v <= 8; v++) {
+  const d = document.createElement("div"); d.className = "klocek"; d.textContent = v; d.tabIndex = 0;
+  d.setAttribute("role", "button"); d.setAttribute("aria-label", "klocek " + v);
+  d.onclick = () => przesun(v);
+  d.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); przesun(v); } };
+  plansza.appendChild(d); klocki[v] = d;
+}
+document.getElementById("celMini").innerHTML = CEL.map(v => `<div class="${v ? "" : "pusty"}">${v || ""}</div>`).join("");
+function rysuj() {
+  stan.forEach((v, i) => { if (v) { klocki[v].style.transform = POZ(i); klocki[v].classList.toggle("na-miejscu", CEL[i] === v); } });
+  document.getElementById("ruchy").textContent = ruchy;
+  document.getElementById("hTeraz").textContent = manhattan(stan);
+  const k = document.getElementById("kom1");
+  if (jestCel(stan) && ruchy > 0) { k.textContent = `Ułożone w ${ruchy} ruchach!`; k.className = "komunikat ok"; }
+  else { k.textContent = ""; k.className = "komunikat"; }
+  rysujDrzewo();
+}
+function przesun(v) {
+  if (animacja) return;
+  const i = stan.indexOf(v), p = stan.indexOf(0);
+  if (!RUCHY[p].includes(i)) return;
+  stan[p] = v; stan[i] = 0; ruchy++; wynikiNieaktualne(); rysuj();
+}
+function wymieszaj(n) {
+  if (animacja) return;
+  let s = CEL.slice(), poprz = -1;
+  for (let t = 0; t < n; t++) {
+    const p = s.indexOf(0), opcje = RUCHY[p].filter(q => q !== poprz), q = opcje[Math.floor(Math.random() * opcje.length)];
+    s[p] = s[q]; s[q] = 0; poprz = p;
+  }
+  if (jestCel(s)) return wymieszaj(n);
+  stan = s; ruchy = 0; wynikiNieaktualne(); rysuj();
+}
+document.querySelectorAll("[data-mix]").forEach(b => b.onclick = () => wymieszaj(+b.dataset.mix));
+
+// ================= KROK 2: drzewo =================
+function mini(s, ruszony) { return `<div class="mini">${s.map(v => `<div class="${v ? (v === ruszony ? "ruszony" : "") : "pusty"}">${v || ""}</div>`).join("")}</div>`; }
+function rysujDrzewo() {
+  const dz = sasiedzi(stan).map(t => ({ t, h: manhattan(t), ruszony: stan[t.indexOf(0)] }));
+  const minF = Math.min(...dz.map(d => 1 + d.h));
+  document.getElementById("drzewo").innerHTML =
+    `<div class="wezel korzen">${mini(stan)}<div class="fgh">g = 0, h = ${manhattan(stan)}</div></div>
+     <div class="strzalki">${dz.map(() => "↓").join(" &nbsp; &nbsp; ")}</div>
+     <div class="dzieci">${dz.map(d => `<div class="wezel ${1 + d.h === minF ? "najlepszy" : ""}">${mini(d.t, d.ruszony)}<div class="fgh">ruch: ${d.ruszony}<br>g = 1, h = ${d.h}<br><b>f = ${1 + d.h}</b></div></div>`).join("")}</div>
+     <p class="maly" style="text-align:center;margin:0.3rem 0 0">Na czerwono — stan, który A* rozwinie najpierw (najmniejsze f).${jestCel(stan) ? " Plansza jest ułożona — wymieszaj ją w kroku 1." : ""}</p>`;
+}
+
+// ================= KROK 3: algorytmy =================
+let rozwA = null;
+function wynikiNieaktualne() {
+  rozwA = null; document.getElementById("odtworz").disabled = true;
+  document.getElementById("wyniki").innerHTML = '<tr><td colspan="5" class="maly">Ustawienie się zmieniło — kliknij „Uruchom wszystkie”.</td></tr>';
+}
+document.getElementById("uruchom").onclick = () => {
+  const start = stan.slice();
+  const wyn = [
+    ["Przeszukiwanie wszerz (bez heurystyki)", wszerz(start)],
+    ["Zachłanny (tylko h = Manhattan)", najpierwNajlepszy(start, manhattan, 0)],
+    ["A*, h = klocki nie na miejscu", najpierwNajlepszy(start, nieNaMiejscu, 1)],
+    ["A*, h = Manhattan", najpierwNajlepszy(start, manhattan, 1)],
+  ];
+  const opt = wyn[0][1].sciezka.length - 1, maxR = Math.max(...wyn.map(w => w[1].rozw), 1);
+  document.getElementById("wyniki").innerHTML = wyn.map(([n, w]) => {
+    const dl = w.sciezka.length - 1, szer = w.rozw ? Math.max(2, Math.log10(w.rozw + 1) / Math.log10(maxR + 1) * 100) : 2;
+    return `<tr><td>${n}</td><td class="liczba">${w.rozw.toLocaleString("pl-PL")}</td><td style="min-width:7rem"><div class="pasek-wyn" style="width:${szer}%"></div></td><td class="liczba">${dl}</td><td>${dl === opt ? '<span style="color:var(--zielony);font-weight:700">tak</span>' : `<span style="color:var(--czerwony);font-weight:700">nie (+${dl - opt})</span>`}</td></tr>`;
+  }).join("");
+  rozwA = wyn[3][1].sciezka; document.getElementById("odtworz").disabled = rozwA.length < 2;
+};
+document.getElementById("odtworz").onclick = () => {
+  if (!rozwA || animacja) return;
+  const kroki = rozwA.slice(1).map(k => [...k].map(Number)); let t = 0; ruchy = 0;
+  document.getElementById("odtworz").disabled = true;
+  animacja = setInterval(() => {
+    if (t >= kroki.length) { clearInterval(animacja); animacja = null; return; }
+    stan = kroki[t++]; ruchy++; rysuj();
+  }, 380);
+};
+
+// ================= KROK 4: wybuch =================
+const PROBLEMY = [
+  ["Kółko i krzyżyk", 5478],
+  ["Przesuwanka 3 × 3", 181440],
+  ["Przesuwanka 4 × 4", 1.046139494e13],
+  ["Szachy", 4.8e44],
+  ["Go 19 × 19", 2.08e170],
+];
+const pSel = document.getElementById("problem");
+PROBLEMY.forEach(([n], k) => pSel.add(new Option(n, k)));
+pSel.value = 3;
+const sup = e => String(e).split("").map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c] ?? "⁻").join("");
+function potega(v) { if (v < 1e6) return Math.round(v).toLocaleString("pl-PL"); const e = Math.floor(Math.log10(v)); return `${(v / 10 ** e).toFixed(2).replace(".", ",")} · 10${sup(e)}`; }
+function czas(s) {
+  const ROK = 3.156e7;
+  if (s < 1e-3) return "poniżej milisekundy";
+  if (s < 60) return s.toFixed(s < 10 ? 2 : 0).replace(".", ",") + " s";
+  if (s < 3600) return (s / 60).toFixed(0) + " min";
+  if (s < 86400) return (s / 3600).toFixed(1).replace(".", ",") + " godz.";
+  if (s < ROK) return (s / 86400).toFixed(0) + " dni";
+  const lata = s / ROK; return lata < 1e6 ? Math.round(lata).toLocaleString("pl-PL") + " lat" : potega(lata) + " lat";
+}
+function krok4() {
+  const [, n] = PROBLEMY[+pSel.value], v = +document.getElementById("szybkosc").value, s = n / v;
+  document.getElementById("lStanow").textContent = potega(n);
+  document.getElementById("czasW").textContent = czas(s);
+  const wiek = 1.38e10 * 3.156e7;
+  document.getElementById("porownanie").textContent = s > wiek
+    ? `To ok. ${potega(s / wiek)} razy dłużej niż istnieje Wszechświat (ok. 13,8 mld lat).`
+    : "";
+}
+pSel.onchange = krok4; document.getElementById("szybkosc").onchange = krok4;
+krok4();
+
+wymieszaj(20);
+requestAnimationFrame(() => requestAnimationFrame(() => plansza.classList.add("gotowa")));
+</script>
+</body>
+</html>
